@@ -49,6 +49,10 @@ private:
     BoundsConstrainer boundsConstrainer;
 
     static constexpr uint16_t TAB_HEIGHT = 30;
+    static constexpr uint16_t MIN_WIDTH = GLRenderer::VISU_WIDTH;
+    static constexpr uint16_t MIN_HEIGHT = GLRenderer::VISU_HEIGHT + TAB_HEIGHT;
+    static constexpr uint16_t MAX_WIDTH = GLRenderer::VISU_WIDTH * 8;
+    static constexpr uint16_t MAX_HEIGHT = GLRenderer::VISU_HEIGHT * 8 + TAB_HEIGHT;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ShadertoyAudioProcessorEditor)
 };

@@ -20,11 +20,8 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
    boundsConstrainer()
 {
     setConstrainer(&boundsConstrainer);
-    boundsConstrainer.setMinimumWidth(GLRenderer::VISU_WIDTH);
-    boundsConstrainer.setMinimumHeight(GLRenderer::VISU_HEIGHT + TAB_HEIGHT);
-    boundsConstrainer.setMaximumWidth(GLRenderer::VISU_WIDTH * 8);
-    boundsConstrainer.setMaximumHeight(GLRenderer::VISU_HEIGHT * 8 + TAB_HEIGHT);
-    setSize(GLRenderer::VISU_WIDTH, GLRenderer::VISU_HEIGHT + TAB_HEIGHT);
+
+    setSize(MIN_WIDTH, MIN_HEIGHT);
     setResizable(true, true);
 
     addAndMakeVisible(tabs);
@@ -32,8 +29,8 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
     tabs.addTab("Browser", juce::Colours::lightblue, &patchEditor, false);
     tabs.addTab("Visualizer", juce::Colours::lightblue, &glRenderer, false);
 
-    patchEditor.setBounds(0, TAB_HEIGHT, GLRenderer::VISU_WIDTH, GLRenderer::VISU_HEIGHT);
-    glRenderer.setBounds(0, TAB_HEIGHT, GLRenderer::VISU_WIDTH, GLRenderer::VISU_HEIGHT);
+    patchEditor.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
+    glRenderer.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
 }
 
 ShadertoyAudioProcessorEditor::~ShadertoyAudioProcessorEditor()
@@ -69,5 +66,12 @@ ShadertoyAudioProcessorEditor::BoundsConstrainer::checkBounds(
 {
     static constexpr double VISU_ASPECT_RATIO =
         (double)GLRenderer::VISU_WIDTH / (double)GLRenderer::VISU_HEIGHT;
+
+    if (bounds.getWidth() > MAX_WIDTH) {
+        bounds.setWidth(MAX_WIDTH);
+    } else if (bounds.getWidth() < MIN_WIDTH) {
+        bounds.setWidth(MIN_WIDTH);
+    }
+
     bounds.setHeight((double)bounds.getWidth() / VISU_ASPECT_RATIO + TAB_HEIGHT);
 }
