@@ -143,11 +143,12 @@ void GLRenderer::renderOpenGL()
     juce::OpenGLHelpers::clear(juce::Colours::black);
 
     if (validState) {
-        glViewport(0, 0, getWidth(), getHeight());
+        double scaleFactor = glContext.getRenderingScale(); // DPI scaling
+        glViewport(0, 0, getWidth() * scaleFactor, getHeight() * scaleFactor);
         program.use();
         
         if (resolutionIntrinsic != nullptr) {
-            resolutionIntrinsic->set(getWidth(), getHeight());
+            resolutionIntrinsic->set(getWidth() * scaleFactor, getHeight() * scaleFactor);
         }
         
         for (int i = 0; i < uniforms.size(); i++) {
