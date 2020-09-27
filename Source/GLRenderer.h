@@ -34,6 +34,8 @@ public:
 private:
     bool loadExtensions();
     bool buildShaderProgram();
+    bool buildCopyProgram();
+    bool createFramebuffer();
     bool checkIntrinsicUniform(const juce::String &name, GLenum type,
                                GLint size, bool &isIntrinsic);
     void alertError(const juce::String &title, const juce::String &message);
@@ -41,11 +43,18 @@ private:
     ShadertoyAudioProcessor& audioProcessor;
     juce::OpenGLContext &glContext;
     juce::OpenGLShaderProgram program;
+    juce::OpenGLShaderProgram copyProgram;
     bool validState;
+    GLuint mFramebuffer;
+    GLuint mRenderTexture;
     std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniforms;
     std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
     
+    static constexpr uint16_t VISU_WIDTH = 640;
+    static constexpr uint16_t VISU_HEIGHT = 360;
+    
     PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;
+    PFNGLDRAWBUFFERSPROC glDrawBuffers;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GLRenderer)
 };

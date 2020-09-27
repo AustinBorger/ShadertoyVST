@@ -24,6 +24,17 @@ static const juce::String vert =
 "    gl_Position = vec4(x, y, 0, 1);\n"
 "}\n";
 
+static const juce::String copyFrag =
+"#version 330\n"
+"in vec2 texCoord;\n"
+"out vec4 FragColor;\n"
+"\n"
+"uniform sampler2D visuTexture;\n"
+"\n"
+"void main() {\n"
+    "FragColor = texture(visuTexture, texCoord);\n"
+"}\n";
+
 static const juce::String frag =
 "#version 330\n"
 "out vec4 FragColor;\n"
@@ -101,6 +112,7 @@ GLRenderer::GLRenderer(ShadertoyAudioProcessor& audioProcessor,
  : audioProcessor(audioProcessor),
    glContext(glContext),
    program(glContext),
+   copyProgram(glContext),
    validState(true),
    uniforms()
 {
@@ -118,16 +130,26 @@ GLRenderer::~GLRenderer()
 void GLRenderer::newOpenGLContextCreated()
 {
     if (!loadExtensions()) {
-	    validState = false;
-        return;
+	    goto failure;
     }
 
     if (!buildShaderProgram()) {
-        validState = false;
-        return;
+        goto failure;
+    }
+    
+    if (!buildCopyProgram()) {
+        goto failure;
+    }
+    
+    if (!createFramebuffer()) {
+        goto failure;
     }
     
     validState = true;
+    return;
+    
+failure:
+    validState = false;
 }
 
 void GLRenderer::openGLContextClosing()
@@ -135,6 +157,7 @@ void GLRenderer::openGLContextClosing()
     resolutionIntrinsic = nullptr;
     uniforms.clear();
     program.release();
+    copyProgram.release();
 }
 
 void GLRenderer::renderOpenGL()
@@ -144,11 +167,17 @@ void GLRenderer::renderOpenGL()
 
     if (validState) {
         double scaleFactor = glContext.getRenderingScale(); // DPI scaling
-        glViewport(0, 0, getWidth() * scaleFactor, getHeight() * scaleFactor);
+
+        /*
+         * First draw to fixed-size framebuffer
+         */
+        glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+        glBindTexture(GL_TEXTURE_2D, mRenderTexture);
+        glViewport(0, 0, VISU_WIDTH, VISU_HEIGHT);
         program.use();
         
         if (resolutionIntrinsic != nullptr) {
-            resolutionIntrinsic->set(getWidth() * scaleFactor, getHeight() * scaleFactor);
+            resolutionIntrinsic->set(VISU_WIDTH, VISU_HEIGHT);
         }
         
         for (int i = 0; i < uniforms.size(); i++) {
@@ -156,6 +185,14 @@ void GLRenderer::renderOpenGL()
             uniforms[i]->set(val);
         }
         
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        
+        /*
+         * Now stretch to the render area
+         */
+        glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, getWidth() * scaleFactor, getHeight() * scaleFactor);
+        copyProgram.use();
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 }
@@ -178,6 +215,13 @@ bool GLRenderer::loadExtensions()
 	    juce::OpenGLHelpers::getExtensionFunction("glGetActiveUniform");
 	if (glGetActiveUniform == nullptr) {
 	    alertError(errorTitle, "Could not find glGetActiveUniform");
+	    return false;
+	}
+	
+	glDrawBuffers = (PFNGLDRAWBUFFERSPROC)
+	    juce::OpenGLHelpers::getExtensionFunction("glDrawBuffers");
+	if (glDrawBuffers == nullptr) {
+	    alertError(errorTitle, "Could not find glDrawBuffers");
 	    return false;
 	}
 	
@@ -261,6 +305,40 @@ bool GLRenderer::buildShaderProgram()
 	}
 	
 	return true;
+}
+
+bool GLRenderer::buildCopyProgram()
+{
+    if (!copyProgram.addVertexShader(vert) ||
+        !copyProgram.addFragmentShader(copyFrag) ||
+        !copyProgram.link()) {
+        alertError("Error building copy program", copyProgram.getLastError());
+        return false;
+    }
+
+    return true;
+}
+
+bool GLRenderer::createFramebuffer()
+{
+    glContext.extensions.glGenFramebuffers(1, &mFramebuffer);
+    glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+    glGenTextures(1, &mRenderTexture);
+    glBindTexture(GL_TEXTURE_2D, mRenderTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, VISU_WIDTH, VISU_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glContext.extensions.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mRenderTexture, 0);
+    
+    GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, drawBuffers);
+    
+    if (glContext.extensions.glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        alertError("Unable to construct framebuffer", "Failed to construct the framebuffer");
+        return false;
+    }
+
+    return true;
 }
 
 void GLRenderer::alertError(const juce::String &title,
