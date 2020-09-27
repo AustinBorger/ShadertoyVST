@@ -27,6 +27,18 @@ public:
     void resized() override;
 
 private:
+    class BoundsConstrainer : public juce::ComponentBoundsConstrainer
+    {
+    public:
+        void checkBounds(juce::Rectangle<int>& bounds,
+                         const juce::Rectangle<int>& previousBounds,
+                         const juce::Rectangle<int>& limits,
+                         bool isStretchingTop,
+                         bool isStretchingLeft,
+                         bool isStretchingBottom,
+                         bool isStretchingRight) override;
+    };
+
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     ShadertoyAudioProcessor& audioProcessor;
@@ -34,9 +46,8 @@ private:
     GLRenderer glRenderer;
     PatchEditor patchEditor;
     juce::TabbedComponent tabs;
-    
-    static constexpr uint16_t VISU_WIDTH = 640;
-    static constexpr uint16_t VISU_HEIGHT = 360;
+    BoundsConstrainer boundsConstrainer;
+
     static constexpr uint16_t TAB_HEIGHT = 30;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ShadertoyAudioProcessorEditor)
