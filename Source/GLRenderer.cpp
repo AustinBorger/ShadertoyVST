@@ -47,6 +47,8 @@ static const juce::String frag =
 "    FragColor = vec4(red, green, blue, 1.0);\n"
 "}\n";
 
+juce::String GLRenderer::sShaderString = frag;
+
 //==============================================================================
 GLRenderer::GLRenderer(ShadertoyAudioProcessor& audioProcessor,
                        juce::OpenGLContext &glContext)
@@ -56,8 +58,7 @@ GLRenderer::GLRenderer(ShadertoyAudioProcessor& audioProcessor,
    copyProgram(glContext),
    validState(true),
    newShaderProgram(false),
-   uniforms(),
-   shaderString(frag)
+   uniforms()
 {
     setOpaque(true);
 	glContext.setRenderer(this);
@@ -212,7 +213,7 @@ failure:
 bool GLRenderer::buildShaderProgram()
 {
     if (!program.addVertexShader(vert) ||
-	    !program.addFragmentShader(shaderString) ||
+	    !program.addFragmentShader(sShaderString) ||
 	    !program.link()) {
 	    alertError("Error building program", program.getLastError());
 	    return false;
@@ -300,8 +301,8 @@ void GLRenderer::alertError(const juce::String &title,
 	                                       title, message);
 }
 
-void GLRenderer::setShader(const juce::String &s)
+void GLRenderer::setShader(const juce::String &shaderString)
 {
-    shaderString = s;
+    sShaderString = shaderString;
     newShaderProgram = true;
 }

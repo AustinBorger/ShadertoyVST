@@ -55,7 +55,7 @@ private:
     GLuint mRenderTexture;
     std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniforms;
     std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
-    juce::String shaderString;
+    static juce::String sShaderString;
     
     PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;
     PFNGLDRAWBUFFERSPROC glDrawBuffers;
