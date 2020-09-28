@@ -113,6 +113,7 @@ void GLRenderer::renderOpenGL()
         double scaleFactor = glContext.getRenderingScale(); // DPI scaling
         
         if (newShaderProgram) {
+            uniforms.clear();
             program.release();
             validState = buildShaderProgram();
             newShaderProgram = false;
