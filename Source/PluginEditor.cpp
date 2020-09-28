@@ -22,7 +22,7 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
     setConstrainer(&boundsConstrainer);
 
     setSize(MIN_WIDTH, MIN_HEIGHT);
-    setResizable(true, true);
+    setResizable(false, true);
 
     addAndMakeVisible(tabs);
     tabs.setBounds(getBounds());
@@ -53,6 +53,12 @@ void ShadertoyAudioProcessorEditor::resized()
     patchEditor.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
 }
 
+int ShadertoyAudioProcessorEditor::getAppropriateHeight(int width)
+{
+    static constexpr double VISU_ASPECT_RATIO =
+        (double)GLRenderer::VISU_WIDTH / (double)GLRenderer::VISU_HEIGHT;
+    return (int)((double)width / VISU_ASPECT_RATIO + TAB_HEIGHT);
+}
 
 void
 ShadertoyAudioProcessorEditor::BoundsConstrainer::checkBounds(
@@ -73,7 +79,7 @@ ShadertoyAudioProcessorEditor::BoundsConstrainer::checkBounds(
         bounds.setWidth(MIN_WIDTH);
     }
 
-    bounds.setHeight((double)bounds.getWidth() / VISU_ASPECT_RATIO + TAB_HEIGHT);
+    bounds.setHeight(getAppropriateHeight(bounds.getWidth()));
 }
 
 void

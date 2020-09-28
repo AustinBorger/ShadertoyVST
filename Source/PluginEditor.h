@@ -39,6 +39,8 @@ private:
                          bool isStretchingBottom,
                          bool isStretchingRight) override;
     };
+    
+    static int getAppropriateHeight(int width);
 
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
