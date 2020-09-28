@@ -47,65 +47,6 @@ static const juce::String frag =
 "    FragColor = vec4(red, green, blue, 1.0);\n"
 "}\n";
 
-static const juce::String frag2 =
-"#version 330\n"
-"out vec4 fragColor;\n"
-"in vec2 texCoord;\n"
-"uniform vec2 iResolution;\n"
-"uniform float iTime;\n"
-"#define PI 3.14159265359\n"
-"\n"
-"vec3 col1 = vec3(0.216, 0.471, 0.698);\n" // blue
-"vec3 col2 = vec3(1.00, 0.329, 0.298);\n" // yellow
-"vec3 col3 = vec3(0.867, 0.910, 0.247);\n" // red
-"\n"
-"float disk(vec2 r, vec2 center, float radius) {\n"
-"	return 1.0 - smoothstep( radius-0.008, radius+0.008, length(r-center));\n"
-"}\n"
-"\n"
-"void main()\n"
-"{\n"
-"	float t = iTime*2.;\n"
-"   vec2 fragCoord = texCoord.xy * iResolution.xy;\n"
-"	vec2 r = (2.0*fragCoord.xy - iResolution.xy) / iResolution.y;\n"
-"	r *= 1.0 + 0.05*sin(r.x*5.+iTime) + 0.05*sin(r.y*3.+iTime);\n"
-"	r *= 1.0 + 0.2*length(r);\n"
-"	float side = 0.5;\n"
-"	vec2 r2 = mod(r, side);\n"
-"	vec2 r3 = r2-side/2.;\n"
-"	float i = floor(r.x/side)+2.;\n"
-"	float j = floor(r.y/side)+4.;\n"
-"	float ii = r.x/side+2.;\n"
-"	float jj = r.y/side+4.;\n"	
-"\n"
-"	vec3 pix = vec3(1.0);\n"
-"\n"
-"	float rad, disks;\n"
-"\n"
-"	rad = 0.15 + 0.05*sin(t+ii*jj);\n"
-"	disks = disk(r3, vec2(0.,0.), rad);\n"
-"	pix = mix(pix, col2, disks);\n"
-"\n"
-"	float speed = 2.0;\n"
-"	float tt = iTime*speed+0.1*i+0.08*j;\n"
-"	float stopEveryAngle = PI/2.0;\n"
-"	float stopRatio = 0.7;\n"
-"	float t1 = (floor(tt) + smoothstep(0.0, 1.0-stopRatio, fract(tt)) )*stopEveryAngle;\n"
-"\n"
-"	float x = -0.07*cos(t1+i);\n"
-"	float y = 0.055*(sin(t1+j)+cos(t1+i));\n"
-"	rad = 0.1 + 0.05*sin(t+i+j);\n"
-"	disks = disk(r3, vec2(x,y), rad);\n"
-"	pix = mix(pix, col1, disks);\n"
-"\n"
-"	rad = 0.2 + 0.05*sin(t*(1.0+0.01*i));\n"
-"	disks = disk(r3, vec2(0.,0.), rad);\n"
-"	pix += 0.2*col3*disks * sin(t+i*j+i);\n"
-"\n"
-"	pix -= smoothstep(0.3, 5.5, length(r));\n"	
-"	fragColor = vec4(pix,1.0);\n"
-"}\n";
-
 //==============================================================================
 GLRenderer::GLRenderer(ShadertoyAudioProcessor& audioProcessor,
                        juce::OpenGLContext &glContext)
@@ -114,7 +55,9 @@ GLRenderer::GLRenderer(ShadertoyAudioProcessor& audioProcessor,
    program(glContext),
    copyProgram(glContext),
    validState(true),
-   uniforms()
+   newShaderProgram(false),
+   uniforms(),
+   shaderString(frag)
 {
     setOpaque(true);
 	glContext.setRenderer(this);
@@ -167,6 +110,15 @@ void GLRenderer::renderOpenGL()
 
     if (validState) {
         double scaleFactor = glContext.getRenderingScale(); // DPI scaling
+        
+        if (newShaderProgram) {
+            program.release();
+            validState = buildShaderProgram();
+            newShaderProgram = false;
+            if (!validState) {
+                return;
+            }
+        }
 
         /*
          * First draw to fixed-size framebuffer
@@ -260,7 +212,7 @@ failure:
 bool GLRenderer::buildShaderProgram()
 {
     if (!program.addVertexShader(vert) ||
-	    !program.addFragmentShader(frag2) ||
+	    !program.addFragmentShader(shaderString) ||
 	    !program.link()) {
 	    alertError("Error building program", program.getLastError());
 	    return false;
@@ -346,4 +298,10 @@ void GLRenderer::alertError(const juce::String &title,
 {
     juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
 	                                       title, message);
+}
+
+void GLRenderer::setShader(const juce::String &s)
+{
+    shaderString = s;
+    newShaderProgram = true;
 }

@@ -31,6 +31,8 @@ public:
     void openGLContextClosing() override;
     void renderOpenGL() override;
     
+    void setShader(const juce::String &shaderString);
+    
     static constexpr uint16_t VISU_WIDTH = 640;
     static constexpr uint16_t VISU_HEIGHT = 360;
 
@@ -48,10 +50,12 @@ private:
     juce::OpenGLShaderProgram program;
     juce::OpenGLShaderProgram copyProgram;
     bool validState;
+    bool newShaderProgram;
     GLuint mFramebuffer;
     GLuint mRenderTexture;
     std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniforms;
     std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
+    juce::String shaderString;
     
     PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;
     PFNGLDRAWBUFFERSPROC glDrawBuffers;

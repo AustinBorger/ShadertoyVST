@@ -10,10 +10,12 @@
 
 #include <JuceHeader.h>
 #include "PatchEditor.h"
+#include "PluginEditor.h"
 
 //==============================================================================
-PatchEditor::PatchEditor()
- : filter("*.glsl", "*", "GLSL files"),
+PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor)
+ : editor(editor),
+   filter("*.glsl", "*", "GLSL files"),
    fileBrowser(juce::FileBrowserComponent::openMode |
                juce::FileBrowserComponent::canSelectFiles,
                juce::File::getSpecialLocation(juce::File::userHomeDirectory),
@@ -21,6 +23,7 @@ PatchEditor::PatchEditor()
 {
     addAndMakeVisible(fileBrowser);
     fileBrowser.setBounds(getBounds());
+    fileBrowser.addListener(this);
 }
 
 PatchEditor::~PatchEditor()
@@ -38,4 +41,25 @@ void PatchEditor::paint (juce::Graphics& g)
 void PatchEditor::resized()
 {
     fileBrowser.setBounds(getBounds());
+}
+
+void PatchEditor::selectionChanged()
+{
+    // Empty
+}
+
+void PatchEditor::fileClicked(const juce::File &file, const juce::MouseEvent &e)
+{
+    // Empty
+}
+
+void PatchEditor::fileDoubleClicked(const juce::File &file)
+{
+    juce::String contents = file.loadFileAsString();
+    editor->setShader(contents);
+}
+
+void PatchEditor::browserRootChanged(const juce::File &newRoot)
+{
+    // Empty
 }

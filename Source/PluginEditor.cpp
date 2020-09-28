@@ -15,7 +15,7 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
  : AudioProcessorEditor(&p), 
    audioProcessor(p),
    glRenderer(p, glContext),
-   patchEditor(),
+   patchEditor(this),
    tabs(juce::TabbedButtonBar::TabsAtTop),
    boundsConstrainer()
 {
@@ -74,4 +74,10 @@ ShadertoyAudioProcessorEditor::BoundsConstrainer::checkBounds(
     }
 
     bounds.setHeight((double)bounds.getWidth() / VISU_ASPECT_RATIO + TAB_HEIGHT);
+}
+
+void
+ShadertoyAudioProcessorEditor::setShader(const juce::String &shaderString)
+{
+    glRenderer.setShader(shaderString);
 }
