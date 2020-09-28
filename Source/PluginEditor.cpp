@@ -20,9 +20,12 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
    boundsConstrainer()
 {
     setConstrainer(&boundsConstrainer);
+    
+    int width = getParentWidth() / 3;
+    int height = getAppropriateHeight(width);
 
-    setSize(MIN_WIDTH, MIN_HEIGHT);
-    setResizable(false, true);
+    setSize(width, height);
+    setResizable(false, false);
 
     addAndMakeVisible(tabs);
     tabs.setBounds(getBounds());
