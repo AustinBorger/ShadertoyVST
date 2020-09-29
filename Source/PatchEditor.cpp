@@ -50,13 +50,13 @@ void PatchEditor::selectionChanged()
 
 void PatchEditor::fileClicked(const juce::File &file, const juce::MouseEvent &e)
 {
-    // Empty
+    juce::String contents = file.loadFileAsString();
+    editor->setShader(contents);
 }
 
 void PatchEditor::fileDoubleClicked(const juce::File &file)
 {
-    juce::String contents = file.loadFileAsString();
-    editor->setShader(contents);
+    // Empty
 }
 
 void PatchEditor::browserRootChanged(const juce::File &newRoot)
