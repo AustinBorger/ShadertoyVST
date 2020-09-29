@@ -186,9 +186,10 @@ void ShadertoyAudioProcessor::setStateInformation (const void* data, int sizeInB
 
 void ShadertoyAudioProcessor::addUniformFloat(const juce::String &name)
 {
+    juce::NormalisableRange<float> normalisableRange(0.0f, 1.0f, 0.0f);
     juce::String paramId = "float" + std::to_string(floatParams.size());
     floatParams.emplace_back(std::move(std::unique_ptr<juce::AudioParameterFloat>
-        (new juce::AudioParameterFloat(paramId, name, 0.0f, 1.0f, 0.0f))));
+        (new juce::AudioParameterFloat(paramId, name, normalisableRange, 0.0f))));
     addParameter(floatParams.back().get());
 }
 
