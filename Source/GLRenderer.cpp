@@ -58,7 +58,8 @@ GLRenderer::GLRenderer(ShadertoyAudioProcessor& audioProcessor,
    copyProgram(glContext),
    validState(true),
    newShaderProgram(false),
-   uniforms()
+   uniformFloats(),
+   uniformInts()
 {
     setOpaque(true);
 	glContext.setRenderer(this);
@@ -99,7 +100,8 @@ failure:
 void GLRenderer::openGLContextClosing()
 {
     resolutionIntrinsic = nullptr;
-    uniforms.clear();
+    uniformFloats.clear();
+    uniformInts.clear();
     program.release();
     copyProgram.release();
 }
@@ -113,7 +115,8 @@ void GLRenderer::renderOpenGL()
         double scaleFactor = glContext.getRenderingScale(); // DPI scaling
         
         if (newShaderProgram) {
-            uniforms.clear();
+            uniformFloats.clear();
+            uniformInts.clear();
             program.release();
             validState = buildShaderProgram();
             newShaderProgram = false;
@@ -134,9 +137,14 @@ void GLRenderer::renderOpenGL()
             resolutionIntrinsic->set(VISU_WIDTH, VISU_HEIGHT);
         }
         
-        for (int i = 0; i < uniforms.size(); i++) {
+        for (int i = 0; i < uniformFloats.size(); i++) {
             float val = audioProcessor.getUniformFloat(i);
-            uniforms[i]->set(val);
+            uniformFloats[i]->set(val);
+        }
+        
+        for (int i = 0; i < uniformInts.size(); i++) {
+            int val = audioProcessor.getUniformInt(i);
+            uniformInts[i]->set(val);
         }
         
         glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -239,22 +247,27 @@ bool GLRenderer::buildShaderProgram()
 	    }
 	    
 	    if (!isIntrinsic) {
-	        if (type != GL_FLOAT) {
-	            juce::String message = "Parameter uniform \"";
-	            message += name;
-	            message += "\" must be a float.";
-	            alertError("Error reading uniforms", message);
-	            return false;
-	        } else if (size != 1) {
+	        if (size != 1) {
 	            juce::String message = "Parameter uniform \"";
 	            message += name;
 	            message += "\" cannot be an array.";
 	            alertError("Error reading uniforms", message);
 	            return false;
 	        }
-	    
-	        uniforms.emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-	            (new juce::OpenGLShaderProgram::Uniform(program, name))));
+	        
+	        if (type == GL_FLOAT) {
+	            uniformFloats.emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+	                (new juce::OpenGLShaderProgram::Uniform(program, name))));
+	        } else if (type == GL_INT) {
+	            uniformInts.emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+	                (new juce::OpenGLShaderProgram::Uniform(program, name))));
+	        } else {
+	            juce::String message = "Parameter uniform \"";
+	            message += name;
+	            message += "\" of unrecognized type.";
+	            alertError("Error reading uniforms", message);
+	            return false;
+	        }
 	    }
 	}
 	

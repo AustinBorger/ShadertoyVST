@@ -53,7 +53,8 @@ private:
     bool newShaderProgram;
     GLuint mFramebuffer;
     GLuint mRenderTexture;
-    std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniforms;
+    std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformFloats;
+    std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformInts;
     std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
     static juce::String sShaderString;
     

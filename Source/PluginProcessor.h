@@ -54,11 +54,14 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     float getUniformFloat(int i);
+    int getUniformInt(int i);
 
 private:
     void addUniformFloat(const juce::String &name);
+    void addUniformInt(const juce::String &name);
 
     std::vector<std::unique_ptr<juce::AudioParameterFloat>> floatParams;
+    std::vector<std::unique_ptr<juce::AudioParameterInt>> intParams;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ShadertoyAudioProcessor)

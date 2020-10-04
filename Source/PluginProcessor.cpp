@@ -23,7 +23,11 @@ ShadertoyAudioProcessor::ShadertoyAudioProcessor()
 #endif
 {
     for (int i = 0; i < 256; i++) {
-        addUniformFloat("uniform" + std::to_string(i));
+        addUniformFloat("float" + std::to_string(i));
+    }
+    
+    for (int i = 0; i < 256; i++) {
+        addUniformInt("int" + std::to_string(i));
     }
 }
 
@@ -193,9 +197,22 @@ void ShadertoyAudioProcessor::addUniformFloat(const juce::String &name)
     addParameter(floatParams.back().get());
 }
 
+void ShadertoyAudioProcessor::addUniformInt(const juce::String &name)
+{
+    juce::String paramId = "int" + std::to_string(intParams.size());
+    intParams.emplace_back(std::move(std::unique_ptr<juce::AudioParameterInt>
+        (new juce::AudioParameterInt(paramId, name, 0, 100, 0))));
+    addParameter(intParams.back().get());
+}
+
 float ShadertoyAudioProcessor::getUniformFloat(int i)
 {
     return floatParams[i]->get();
+}
+
+int ShadertoyAudioProcessor::getUniformInt(int i)
+{
+    return intParams[i]->get();
 }
 
 //==============================================================================
