@@ -21,7 +21,7 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
 {
     setConstrainer(&boundsConstrainer);
     
-    int width = getParentWidth() / 3;
+    int width = GLRenderer::VISU_WIDTH * 2;
     int height = getAppropriateHeight(width);
 
     setSize(width, height);
@@ -86,7 +86,7 @@ ShadertoyAudioProcessorEditor::BoundsConstrainer::checkBounds(
 }
 
 void
-ShadertoyAudioProcessorEditor::setShader(const juce::String &shaderString)
+ShadertoyAudioProcessorEditor::setShader(const juce::String &shaderPath)
 {
-    glRenderer.setShader(shaderString);
+    glRenderer.setShader(shaderPath);
 }

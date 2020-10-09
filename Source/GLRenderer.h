@@ -31,12 +31,22 @@ public:
     void openGLContextClosing() override;
     void renderOpenGL() override;
     
-    void setShader(const juce::String &shaderString);
+    void setShader(const juce::String &shaderPath);
     
     static constexpr uint16_t VISU_WIDTH = 640;
     static constexpr uint16_t VISU_HEIGHT = 360;
 
 private:
+    class DoubleClickListener : public juce::MouseListener
+    {
+    public:
+        DoubleClickListener(GLRenderer *parent);
+        
+        void mouseDoubleClick(const juce::MouseEvent &event) override;
+    private:
+        GLRenderer *parent;
+    };
+
     bool loadExtensions();
     bool buildShaderProgram();
     bool buildCopyProgram();
@@ -46,6 +56,7 @@ private:
     void alertError(const juce::String &title, const juce::String &message);
 
     ShadertoyAudioProcessor& audioProcessor;
+    DoubleClickListener doubleClickListener;
     juce::OpenGLContext &glContext;
     juce::OpenGLShaderProgram program;
     juce::OpenGLShaderProgram copyProgram;
@@ -56,6 +67,7 @@ private:
     std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformFloats;
     std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformInts;
     std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
+    static juce::String sShaderPath;
     static juce::String sShaderString;
     
     PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;

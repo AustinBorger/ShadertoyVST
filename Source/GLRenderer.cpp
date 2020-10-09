@@ -47,12 +47,14 @@ static const juce::String frag =
 "    FragColor = vec4(red, green, blue, 1.0);\n"
 "}\n";
 
-juce::String GLRenderer::sShaderString = frag;
+juce::String GLRenderer::sShaderPath = "";
+juce::String GLRenderer::sShaderString = "";
 
 //==============================================================================
 GLRenderer::GLRenderer(ShadertoyAudioProcessor& audioProcessor,
                        juce::OpenGLContext &glContext)
  : audioProcessor(audioProcessor),
+   doubleClickListener(this),
    glContext(glContext),
    program(glContext),
    copyProgram(glContext),
@@ -65,6 +67,7 @@ GLRenderer::GLRenderer(ShadertoyAudioProcessor& audioProcessor,
 	glContext.setRenderer(this);
 	glContext.attachTo(*this);
 	glContext.setContinuousRepainting(true);
+	addMouseListener(&doubleClickListener, false);
 }
 
 GLRenderer::~GLRenderer()
@@ -221,8 +224,19 @@ failure:
 
 bool GLRenderer::buildShaderProgram()
 {
+    juce::String shaderString;
+
+    if (!sShaderString.isEmpty()) {
+        shaderString = sShaderString;
+    } else if (!sShaderPath.isEmpty()) {
+        juce::File file(sShaderPath);
+        shaderString = sShaderString = file.loadFileAsString();
+    } else {
+        shaderString = frag;
+    }
+
     if (!program.addVertexShader(vert) ||
-	    !program.addFragmentShader(sShaderString) ||
+	    !program.addFragmentShader(shaderString) ||
 	    !program.link()) {
 	    alertError("Error building program", program.getLastError());
 	    return false;
@@ -315,8 +329,19 @@ void GLRenderer::alertError(const juce::String &title,
 	                                       title, message);
 }
 
-void GLRenderer::setShader(const juce::String &shaderString)
+void GLRenderer::setShader(const juce::String &shaderPath)
 {
-    sShaderString = shaderString;
+    sShaderPath = shaderPath;
+    sShaderString = "";
     newShaderProgram = true;
+}
+
+
+GLRenderer::DoubleClickListener::DoubleClickListener(GLRenderer *parent)
+ : parent(parent)
+{ }
+
+void GLRenderer::DoubleClickListener::mouseDoubleClick(const juce::MouseEvent &event)
+{
+    parent->setShader(sShaderPath);
 }

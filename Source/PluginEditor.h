@@ -25,7 +25,7 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-    void setShader(const juce::String &shaderString);
+    void setShader(const juce::String &shaderPath);
 
 private:
     class BoundsConstrainer : public juce::ComponentBoundsConstrainer
