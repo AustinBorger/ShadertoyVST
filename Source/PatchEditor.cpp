@@ -19,28 +19,54 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor)
    fileBrowser(juce::FileBrowserComponent::openMode |
                juce::FileBrowserComponent::canSelectFiles,
                juce::File::getSpecialLocation(juce::File::userHomeDirectory),
-               &filter, nullptr)
+               &filter, nullptr),
+   shaderListBox(),
+   newShaderButton()
 {
-    addAndMakeVisible(fileBrowser);
-    fileBrowser.setBounds(getBounds());
-    fileBrowser.addListener(this);
+    addAndMakeVisible(shaderListBox);
+    shaderListBox.getHeader().addColumn("ID", 0, 30, 30, -1,
+                                        juce::TableHeaderComponent::ColumnPropertyFlags::notSortable);
+    shaderListBox.getHeader().addColumn("File Location", 1, 30, 30, -1,
+                                        juce::TableHeaderComponent::ColumnPropertyFlags::notSortable);
+                                        
+    addAndMakeVisible(newShaderButton);
+    newShaderButton.setButtonText("New");
+    
+    addAndMakeVisible(deleteButton);
+    deleteButton.setButtonText("Delete");
 }
 
 PatchEditor::~PatchEditor()
 {
 }
 
-void PatchEditor::paint (juce::Graphics& g)
+void PatchEditor::paint(juce::Graphics& g)
 {
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-
-    g.setColour(juce::Colours::grey);
-    g.drawRect(getLocalBounds(), 1);
+    juce::Rectangle<int> behindShaderList = shaderListBox.getBounds();
+    behindShaderList.setHeight(getHeight());
+    g.setColour(shaderListBox.findColour(juce::ListBox::backgroundColourId));
+    g.fillRect(behindShaderList);
 }
 
 void PatchEditor::resized()
 {
-    fileBrowser.setBounds(getBounds());
+    juce::Rectangle<int> shaderListBounds;
+    shaderListBounds.setX(0);
+    shaderListBounds.setY(0);
+    shaderListBounds.setHeight(getBounds().getHeight() - 40);
+    shaderListBounds.setWidth(getBounds().getWidth() / 3);
+
+    shaderListBox.setBounds(shaderListBounds);
+    shaderListBox.getHeader().setColumnWidth(0, 40);
+    shaderListBox.getHeader().setColumnWidth(1, shaderListBounds.getWidth() - 40);
+    
+    int newButtonWidth = 75;
+    int deleteButtonWidth = 75;
+    int space = 10;
+    int totalWidth = newButtonWidth + deleteButtonWidth + space;
+    newShaderButton.setBounds((shaderListBounds.getWidth() - totalWidth) / 2, getHeight() - 30, newButtonWidth, 20);
+    deleteButton.setBounds((shaderListBounds.getWidth() - totalWidth) / 2 + newButtonWidth + space, getHeight() - 30, deleteButtonWidth, 20);
 }
 
 void PatchEditor::selectionChanged()

@@ -29,8 +29,8 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
 
     addAndMakeVisible(tabs);
     tabs.setBounds(getBounds());
-    tabs.addTab("Browser", juce::Colours::lightblue, &patchEditor, false);
-    tabs.addTab("Visualizer", juce::Colours::lightblue, &glRenderer, false);
+    tabs.addTab("Patch", juce::Colours::grey, &patchEditor, false);
+    tabs.addTab("Visualizer", juce::Colours::grey, &glRenderer, false);
 
     patchEditor.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
     glRenderer.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
@@ -44,8 +44,8 @@ ShadertoyAudioProcessorEditor::~ShadertoyAudioProcessorEditor()
 void ShadertoyAudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.setGradientFill(
-        juce::ColourGradient(juce::Colours::white, 0, 0,
-                             juce::Colours::lightblue, 0, (float) getHeight(), false));
+        juce::ColourGradient(juce::Colours::grey, 0, 0,
+                             juce::Colours::grey, 0, (float) getHeight(), false));
     g.fillAll();
 }
 

@@ -30,6 +30,9 @@ public:
 private:
     juce::FileBrowserComponent fileBrowser;
     juce::WildcardFileFilter filter;
+    juce::TableListBox shaderListBox;
+    juce::TextButton newShaderButton;
+    juce::TextButton deleteButton;
     ShadertoyAudioProcessorEditor *editor;
     
     void selectionChanged() override;
