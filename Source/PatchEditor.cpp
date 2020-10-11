@@ -15,15 +15,13 @@
 //==============================================================================
 PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor)
  : editor(editor),
-   filter("*.glsl", "*", "GLSL files"),
-   fileBrowser(juce::FileBrowserComponent::openMode |
-               juce::FileBrowserComponent::canSelectFiles,
-               juce::File::getSpecialLocation(juce::File::userHomeDirectory),
-               &filter, nullptr),
    shaderListBox(),
-   newShaderButton()
+   newShaderButton(),
+   deleteButton(),
+   shaderListBoxModel(&shaderListBox, this)
 {
     addAndMakeVisible(shaderListBox);
+    shaderListBox.setModel(&shaderListBoxModel);
     shaderListBox.getHeader().addColumn("ID", 0, 30, 30, -1,
                                         juce::TableHeaderComponent::ColumnPropertyFlags::notSortable);
     shaderListBox.getHeader().addColumn("File Location", 1, 30, 30, -1,
@@ -31,9 +29,11 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor)
                                         
     addAndMakeVisible(newShaderButton);
     newShaderButton.setButtonText("New");
+    newShaderButton.addListener(this);
     
     addAndMakeVisible(deleteButton);
     deleteButton.setButtonText("Delete");
+    deleteButton.addListener(this);
 }
 
 PatchEditor::~PatchEditor()
@@ -69,22 +69,102 @@ void PatchEditor::resized()
     deleteButton.setBounds((shaderListBounds.getWidth() - totalWidth) / 2 + newButtonWidth + space, getHeight() - 30, deleteButtonWidth, 20);
 }
 
-void PatchEditor::selectionChanged()
+void PatchEditor::updateShaders()
 {
-    // Empty
+    // editor->setShader(file.getFullPathName());
 }
 
-void PatchEditor::fileClicked(const juce::File &file, const juce::MouseEvent &e)
+void PatchEditor::buttonClicked(juce::Button *button)
 {
-    editor->setShader(file.getFullPathName());
+    if (button == &newShaderButton) {
+        shaderListBoxModel.newRow();
+    } else if (button == &deleteButton) {
+        shaderListBoxModel.deleteSelectedRow();
+    }
 }
 
-void PatchEditor::fileDoubleClicked(const juce::File &file)
+PatchEditor::ShaderListBoxModel::ShaderListBoxModel(juce::TableListBox *box,
+                                                    PatchEditor *parent)
+ : shaderLocations(),
+   box(box),
+   parent(parent),
+   selectedRow(-1)
+{ }
+
+int PatchEditor::ShaderListBoxModel::getNumRows()
 {
-    // Empty
+    return shaderLocations.size();
 }
 
-void PatchEditor::browserRootChanged(const juce::File &newRoot)
+void PatchEditor::ShaderListBoxModel::paintRowBackground(
+    juce::Graphics &g,
+    int rowNumber,
+    int width,
+    int height,
+    bool rowIsSelected)
 {
-    // Empty
+    auto alternateColour = box->findColour(juce::ListBox::backgroundColourId)
+                           .interpolatedWith(box->findColour(juce::ListBox::textColourId), 0.03f);
+    if (rowIsSelected) {
+        g.fillAll(juce::Colours::lightblue);
+    } else if (rowNumber % 2) {
+        g.fillAll(alternateColour);
+    }
+}
+
+void PatchEditor::ShaderListBoxModel::paintCell(
+    juce::Graphics &g,
+    int rowNumber,
+    int columnId,
+    int width,
+    int height,
+    bool rowIsSelected)
+{
+    g.setColour(rowIsSelected ? juce::Colours::darkblue : box->findColour(juce::ListBox::textColourId));
+    g.setFont(font);
+    
+    if (columnId == 0) {
+        g.drawText(std::to_string(rowNumber), 2, 0, width - 4, height, juce::Justification::centredRight, true);
+    } else if (columnId == 1) {
+        juce::String text = "<none>";
+        if (!shaderLocations[rowNumber].isEmpty()) {
+            text = shaderLocations[rowNumber];
+        }
+
+        g.drawText(text, 2, 0, width - 4, height, juce::Justification::centredLeft, true);
+    }
+ 
+    g.setColour(box->findColour(juce::ListBox::backgroundColourId));
+    g.fillRect(width - 1, 0, 1, height);
+}
+
+void PatchEditor::ShaderListBoxModel::selectedRowsChanged(int lastRowSelected)
+{
+    selectedRow = lastRowSelected;
+}
+
+void PatchEditor::ShaderListBoxModel::cellDoubleClicked(
+    int rowNumber,
+    int columnId,
+    const juce::MouseEvent &)
+{
+    juce::FileChooser fileChooser("Choose Shader File", juce::File::getSpecialLocation(juce::File::userHomeDirectory), "*.glsl");
+    if (fileChooser.browseForFileToOpen()) {
+        shaderLocations[rowNumber] = fileChooser.getResult().getFullPathName();
+        box->updateContent();
+    }
+}
+
+void PatchEditor::ShaderListBoxModel::newRow()
+{
+    shaderLocations.emplace_back();
+    box->updateContent();
+}
+
+void PatchEditor::ShaderListBoxModel::deleteSelectedRow()
+{
+    if (selectedRow > -1) {
+        shaderLocations.erase(shaderLocations.begin() + selectedRow);
+        box->updateContent();
+    }
 }
