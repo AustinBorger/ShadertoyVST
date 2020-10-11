@@ -215,6 +215,31 @@ int ShadertoyAudioProcessor::getUniformInt(int i)
     return intParams[i]->get();
 }
 
+void ShadertoyAudioProcessor::addShaderFileEntry()
+{
+    shaderFiles.emplace_back();
+}
+
+void ShadertoyAudioProcessor::removeShaderFileEntry(int idx)
+{
+    shaderFiles.erase(shaderFiles.begin() + idx);
+}
+
+void ShadertoyAudioProcessor::setShaderFile(int idx, juce::String shaderFile)
+{
+    shaderFiles[idx] = std::move(shaderFile);
+}
+
+const juce::String &ShadertoyAudioProcessor::getShaderFile(int idx)
+{
+    return shaderFiles[idx];
+}
+
+size_t ShadertoyAudioProcessor::getNumShaderFiles()
+{
+    return shaderFiles.size();
+}
+
 //==============================================================================
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

@@ -13,12 +13,14 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor)
+PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
+                         ShadertoyAudioProcessor& processor)
  : editor(editor),
+   processor(processor),
    shaderListBox(),
    newShaderButton(),
    deleteButton(),
-   shaderListBoxModel(&shaderListBox, this)
+   shaderListBoxModel(&shaderListBox, this, processor)
 {
     addAndMakeVisible(shaderListBox);
     shaderListBox.setModel(&shaderListBoxModel);
@@ -84,16 +86,17 @@ void PatchEditor::buttonClicked(juce::Button *button)
 }
 
 PatchEditor::ShaderListBoxModel::ShaderListBoxModel(juce::TableListBox *box,
-                                                    PatchEditor *parent)
- : shaderLocations(),
-   box(box),
+                                                    PatchEditor *parent,
+                                                    ShadertoyAudioProcessor &processor)
+ : box(box),
    parent(parent),
+   processor(processor),
    selectedRow(-1)
 { }
 
 int PatchEditor::ShaderListBoxModel::getNumRows()
 {
-    return shaderLocations.size();
+    return processor.getNumShaderFiles();
 }
 
 void PatchEditor::ShaderListBoxModel::paintRowBackground(
@@ -127,8 +130,8 @@ void PatchEditor::ShaderListBoxModel::paintCell(
         g.drawText(std::to_string(rowNumber), 2, 0, width - 4, height, juce::Justification::centredRight, true);
     } else if (columnId == 1) {
         juce::String text = "<none>";
-        if (!shaderLocations[rowNumber].isEmpty()) {
-            text = shaderLocations[rowNumber];
+        if (!processor.getShaderFile(rowNumber).isEmpty()) {
+            text = processor.getShaderFile(rowNumber);
         }
 
         g.drawText(text, 2, 0, width - 4, height, juce::Justification::centredLeft, true);
@@ -150,21 +153,21 @@ void PatchEditor::ShaderListBoxModel::cellDoubleClicked(
 {
     juce::FileChooser fileChooser("Choose Shader File", juce::File::getSpecialLocation(juce::File::userHomeDirectory), "*.glsl");
     if (fileChooser.browseForFileToOpen()) {
-        shaderLocations[rowNumber] = fileChooser.getResult().getFullPathName();
+        processor.setShaderFile(rowNumber, fileChooser.getResult().getFullPathName());
         box->updateContent();
     }
 }
 
 void PatchEditor::ShaderListBoxModel::newRow()
 {
-    shaderLocations.emplace_back();
+    processor.addShaderFileEntry();
     box->updateContent();
 }
 
 void PatchEditor::ShaderListBoxModel::deleteSelectedRow()
 {
     if (selectedRow > -1) {
-        shaderLocations.erase(shaderLocations.begin() + selectedRow);
+        processor.removeShaderFileEntry(selectedRow);
         box->updateContent();
     }
 }

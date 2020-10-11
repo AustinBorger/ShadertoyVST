@@ -55,6 +55,12 @@ public:
     
     float getUniformFloat(int i);
     int getUniformInt(int i);
+    
+    void addShaderFileEntry();
+    void removeShaderFileEntry(int idx);
+    void setShaderFile(int idx, juce::String shaderFile);
+    const juce::String &getShaderFile(int idx);
+    size_t getNumShaderFiles();
 
 private:
     void addUniformFloat(const juce::String &name);
@@ -62,6 +68,7 @@ private:
 
     std::vector<std::unique_ptr<juce::AudioParameterFloat>> floatParams;
     std::vector<std::unique_ptr<juce::AudioParameterInt>> intParams;
+    std::vector<juce::String> shaderFiles;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ShadertoyAudioProcessor)

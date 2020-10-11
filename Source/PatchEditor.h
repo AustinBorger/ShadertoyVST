@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "PluginProcessor.h"
 
 class ShadertoyAudioProcessorEditor;
 
@@ -21,7 +22,8 @@ class PatchEditor  : public juce::Component,
                      public juce::Button::Listener
 {
 public:
-    PatchEditor(ShadertoyAudioProcessorEditor *editor);
+    PatchEditor(ShadertoyAudioProcessorEditor *editor,
+                ShadertoyAudioProcessor &processor);
     ~PatchEditor() override;
 
     void paint(juce::Graphics&) override;
@@ -35,7 +37,8 @@ private:
     {
     public:
         ShaderListBoxModel(juce::TableListBox *box,
-                           PatchEditor *parent);
+                           PatchEditor *parent,
+                           ShadertoyAudioProcessor &processor);
         virtual ~ShaderListBoxModel() { }
 
         int getNumRows() override;
@@ -54,7 +57,7 @@ private:
         juce::TableListBox *box;
 
         PatchEditor *parent;
-        std::vector<juce::String> shaderLocations;
+        ShadertoyAudioProcessor &processor;
         int selectedRow;
     };
 
@@ -64,6 +67,7 @@ private:
     
     ShaderListBoxModel shaderListBoxModel;
     ShadertoyAudioProcessorEditor *editor;
+    ShadertoyAudioProcessor &processor;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PatchEditor)
 };
