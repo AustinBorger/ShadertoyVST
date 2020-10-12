@@ -16,11 +16,8 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
    audioProcessor(p),
    glRenderer(p, glContext),
    patchEditor(this, p),
-   tabs(juce::TabbedButtonBar::TabsAtTop),
-   boundsConstrainer()
+   tabs(juce::TabbedButtonBar::TabsAtTop)
 {
-    setConstrainer(&boundsConstrainer);
-    
     int width = GLRenderer::VISU_WIDTH * 2;
     int height = getAppropriateHeight(width);
 
@@ -61,32 +58,4 @@ int ShadertoyAudioProcessorEditor::getAppropriateHeight(int width)
     static constexpr double VISU_ASPECT_RATIO =
         (double)GLRenderer::VISU_WIDTH / (double)GLRenderer::VISU_HEIGHT;
     return (int)((double)width / VISU_ASPECT_RATIO + TAB_HEIGHT);
-}
-
-void
-ShadertoyAudioProcessorEditor::BoundsConstrainer::checkBounds(
-    juce::Rectangle<int>& bounds,
-    const juce::Rectangle<int>& previousBounds,
-    const juce::Rectangle<int>& limits,
-    bool isStretchingTop,
-    bool isStretchingLeft,
-    bool isStretchingBottom,
-    bool isStretchingRight)
-{
-    static constexpr double VISU_ASPECT_RATIO =
-        (double)GLRenderer::VISU_WIDTH / (double)GLRenderer::VISU_HEIGHT;
-
-    if (bounds.getWidth() > MAX_WIDTH) {
-        bounds.setWidth(MAX_WIDTH);
-    } else if (bounds.getWidth() < MIN_WIDTH) {
-        bounds.setWidth(MIN_WIDTH);
-    }
-
-    bounds.setHeight(getAppropriateHeight(bounds.getWidth()));
-}
-
-void
-ShadertoyAudioProcessorEditor::setShader(const juce::String &shaderPath)
-{
-    glRenderer.setShader(shaderPath);
 }

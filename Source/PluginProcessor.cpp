@@ -218,16 +218,20 @@ int ShadertoyAudioProcessor::getUniformInt(int i)
 void ShadertoyAudioProcessor::addShaderFileEntry()
 {
     shaderFiles.emplace_back();
+    shaderStrings.emplace_back();
 }
 
 void ShadertoyAudioProcessor::removeShaderFileEntry(int idx)
 {
     shaderFiles.erase(shaderFiles.begin() + idx);
+    shaderStrings.erase(shaderStrings.begin() + idx);
 }
 
 void ShadertoyAudioProcessor::setShaderFile(int idx, juce::String shaderFile)
 {
     shaderFiles[idx] = std::move(shaderFile);
+    juce::File file(shaderFiles[idx]);
+    shaderStrings[idx] = file.loadFileAsString();
 }
 
 const juce::String &ShadertoyAudioProcessor::getShaderFile(int idx)
@@ -235,9 +239,19 @@ const juce::String &ShadertoyAudioProcessor::getShaderFile(int idx)
     return shaderFiles[idx];
 }
 
+const juce::String &ShadertoyAudioProcessor::getShaderString(int idx)
+{
+    return shaderStrings[idx];
+}
+
 size_t ShadertoyAudioProcessor::getNumShaderFiles()
 {
     return shaderFiles.size();
+}
+
+bool ShadertoyAudioProcessor::hasShaderFiles()
+{
+    return !shaderFiles.empty();
 }
 
 //==============================================================================

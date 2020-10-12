@@ -25,21 +25,8 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-    void setShader(const juce::String &shaderPath);
 
-private:
-    class BoundsConstrainer : public juce::ComponentBoundsConstrainer
-    {
-    public:
-        void checkBounds(juce::Rectangle<int>& bounds,
-                         const juce::Rectangle<int>& previousBounds,
-                         const juce::Rectangle<int>& limits,
-                         bool isStretchingTop,
-                         bool isStretchingLeft,
-                         bool isStretchingBottom,
-                         bool isStretchingRight) override;
-    };
-    
+private:    
     static int getAppropriateHeight(int width);
 
     // This reference is provided as a quick way for your editor to
@@ -49,7 +36,6 @@ private:
     GLRenderer glRenderer;
     PatchEditor patchEditor;
     juce::TabbedComponent tabs;
-    BoundsConstrainer boundsConstrainer;
 
     static constexpr uint16_t TAB_HEIGHT = 30;
     static constexpr uint16_t MIN_WIDTH = GLRenderer::VISU_WIDTH;

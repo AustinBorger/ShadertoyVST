@@ -71,11 +71,6 @@ void PatchEditor::resized()
     deleteButton.setBounds((shaderListBounds.getWidth() - totalWidth) / 2 + newButtonWidth + space, getHeight() - 30, deleteButtonWidth, 20);
 }
 
-void PatchEditor::updateShaders()
-{
-    // editor->setShader(file.getFullPathName());
-}
-
 void PatchEditor::buttonClicked(juce::Button *button)
 {
     if (button == &newShaderButton) {

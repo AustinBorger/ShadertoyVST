@@ -29,8 +29,6 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
     void buttonClicked(juce::Button *) override;
-    
-    void updateShaders();
 
 private:
     class ShaderListBoxModel : public juce::TableListBoxModel

@@ -31,44 +31,29 @@ public:
     void openGLContextClosing() override;
     void renderOpenGL() override;
     
-    void setShader(const juce::String &shaderPath);
-    
     static constexpr uint16_t VISU_WIDTH = 640;
     static constexpr uint16_t VISU_HEIGHT = 360;
 
 private:
-    class DoubleClickListener : public juce::MouseListener
-    {
-    public:
-        DoubleClickListener(GLRenderer *parent);
-        
-        void mouseDoubleClick(const juce::MouseEvent &event) override;
-    private:
-        GLRenderer *parent;
-    };
-
     bool loadExtensions();
-    bool buildShaderProgram();
+    bool buildShaderProgram(int idx);
     bool buildCopyProgram();
     bool createFramebuffer();
     bool checkIntrinsicUniform(const juce::String &name, GLenum type,
-                               GLint size, bool &isIntrinsic);
+                               GLint size, bool &isIntrinsic, int programIdx);
     void alertError(const juce::String &title, const juce::String &message);
 
-    ShadertoyAudioProcessor& audioProcessor;
-    DoubleClickListener doubleClickListener;
+    ShadertoyAudioProcessor& processor;
     juce::OpenGLContext &glContext;
-    juce::OpenGLShaderProgram program;
+    std::vector<std::unique_ptr<juce::OpenGLShaderProgram>> programs;
     juce::OpenGLShaderProgram copyProgram;
     bool validState;
-    bool newShaderProgram;
     GLuint mFramebuffer;
     GLuint mRenderTexture;
-    std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformFloats;
-    std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformInts;
-    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
-    static juce::String sShaderPath;
-    static juce::String sShaderString;
+    std::vector<std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>>> uniformFloats;
+    std::vector<std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>>> uniformInts;
+    std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> resolutionIntrinsics;
+    std::vector<int> refreshList;
     
     PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;
     PFNGLDRAWBUFFERSPROC glDrawBuffers;

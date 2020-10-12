@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "GLRenderer.h"
+#include <algorithm>
 
 static const juce::String vert =
 "#version 330\n"
@@ -47,19 +48,14 @@ static const juce::String frag =
 "    FragColor = vec4(red, green, blue, 1.0);\n"
 "}\n";
 
-juce::String GLRenderer::sShaderPath = "";
-juce::String GLRenderer::sShaderString = "";
-
 //==============================================================================
-GLRenderer::GLRenderer(ShadertoyAudioProcessor& audioProcessor,
+GLRenderer::GLRenderer(ShadertoyAudioProcessor& processor,
                        juce::OpenGLContext &glContext)
- : audioProcessor(audioProcessor),
-   doubleClickListener(this),
+ : processor(processor),
    glContext(glContext),
-   program(glContext),
+   programs(),
    copyProgram(glContext),
    validState(true),
-   newShaderProgram(false),
    uniformFloats(),
    uniformInts()
 {
@@ -67,7 +63,6 @@ GLRenderer::GLRenderer(ShadertoyAudioProcessor& audioProcessor,
 	glContext.setRenderer(this);
 	glContext.attachTo(*this);
 	glContext.setContinuousRepainting(true);
-	addMouseListener(&doubleClickListener, false);
 }
 
 GLRenderer::~GLRenderer()
@@ -80,13 +75,20 @@ void GLRenderer::newOpenGLContextCreated()
     if (!loadExtensions()) {
 	    goto failure;
     }
-
-    if (!buildShaderProgram()) {
-        goto failure;
-    }
     
     if (!buildCopyProgram()) {
         goto failure;
+    }
+    
+    for (int i = 0; i < max(processor.getNumShaderFiles(), 1); i++) {
+        std::unique_ptr<juce::OpenGLShaderProgram> program(new juce::OpenGLShaderProgram(glContext));
+        programs.emplace_back(std::move(program));
+        resolutionIntrinsics.emplace_back();
+        uniformFloats.emplace_back();
+        uniformInts.emplace_back();
+        if (!buildShaderProgram(i)) {
+            goto failure;
+        }
     }
     
     if (!createFramebuffer()) {
@@ -102,11 +104,15 @@ failure:
 
 void GLRenderer::openGLContextClosing()
 {
-    resolutionIntrinsic = nullptr;
+    resolutionIntrinsics.clear();
     uniformFloats.clear();
     uniformInts.clear();
-    program.release();
     copyProgram.release();
+
+    for (std::unique_ptr<juce::OpenGLShaderProgram> &program : programs) {
+        program->release();
+    }
+    programs.clear();
 }
 
 void GLRenderer::renderOpenGL()
@@ -116,17 +122,6 @@ void GLRenderer::renderOpenGL()
 
     if (validState) {
         double scaleFactor = glContext.getRenderingScale(); // DPI scaling
-        
-        if (newShaderProgram) {
-            uniformFloats.clear();
-            uniformInts.clear();
-            program.release();
-            validState = buildShaderProgram();
-            newShaderProgram = false;
-            if (!validState) {
-                return;
-            }
-        }
 
         /*
          * First draw to fixed-size framebuffer
@@ -134,20 +129,20 @@ void GLRenderer::renderOpenGL()
         glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
         glBindTexture(GL_TEXTURE_2D, mRenderTexture);
         glViewport(0, 0, VISU_WIDTH, VISU_HEIGHT);
-        program.use();
+        programs[0]->use();
         
-        if (resolutionIntrinsic != nullptr) {
-            resolutionIntrinsic->set(VISU_WIDTH, VISU_HEIGHT);
+        if (resolutionIntrinsics[0] != nullptr) {
+            resolutionIntrinsics[0]->set(VISU_WIDTH, VISU_HEIGHT);
         }
         
-        for (int i = 0; i < uniformFloats.size(); i++) {
-            float val = audioProcessor.getUniformFloat(i);
-            uniformFloats[i]->set(val);
+        for (int i = 0; i < uniformFloats[0].size(); i++) {
+            float val = processor.getUniformFloat(i);
+            uniformFloats[0][i]->set(val);
         }
         
-        for (int i = 0; i < uniformInts.size(); i++) {
-            int val = audioProcessor.getUniformInt(i);
-            uniformInts[i]->set(val);
+        for (int i = 0; i < uniformInts[0].size(); i++) {
+            int val = processor.getUniformInt(i);
+            uniformInts[0][i]->set(val);
         }
         
         glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -161,7 +156,6 @@ void GLRenderer::renderOpenGL()
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 }
-
 
 void GLRenderer::resized()
 {
@@ -196,7 +190,8 @@ bool GLRenderer::loadExtensions()
 bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
                                        GLenum type,
                                        GLint size,
-                                       bool &isIntrinsic)
+                                       bool &isIntrinsic,
+                                       int programIdx)
 {
     isIntrinsic = false;
     
@@ -207,8 +202,8 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
             goto failure;
         }
         
-        resolutionIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-            (new juce::OpenGLShaderProgram::Uniform(program, RESOLUTION_INTRINSIC_NAME)));
+        resolutionIntrinsics[programIdx] = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+            (new juce::OpenGLShaderProgram::Uniform(*programs[programIdx], RESOLUTION_INTRINSIC_NAME)));
         
         isIntrinsic = true;
         return true;
@@ -222,41 +217,38 @@ failure:
     return false;
 }
 
-bool GLRenderer::buildShaderProgram()
+bool GLRenderer::buildShaderProgram(int idx)
 {
     juce::String shaderString;
-
-    if (!sShaderString.isEmpty()) {
-        shaderString = sShaderString;
-    } else if (!sShaderPath.isEmpty()) {
-        juce::File file(sShaderPath);
-        shaderString = sShaderString = file.loadFileAsString();
-    } else {
+    
+    if (processor.getNumShaderFiles() <= idx || processor.getShaderString(idx).isEmpty()) {
         shaderString = frag;
+    } else {
+        shaderString = processor.getShaderString(idx);
     }
 
-    if (!program.addVertexShader(vert) ||
-	    !program.addFragmentShader(shaderString) ||
-	    !program.link()) {
-	    alertError("Error building program", program.getLastError());
+    if (!programs[idx]->addVertexShader(vert) ||
+	    !programs[idx]->addFragmentShader(shaderString) ||
+	    !programs[idx]->link()) {
+	    alertError("Error building program", programs[idx]->getLastError());
 	    return false;
 	}
 	
 	GLint count;
-	glContext.extensions.glGetProgramiv(program.getProgramID(), GL_ACTIVE_UNIFORMS, &count);
+	glContext.extensions.glGetProgramiv(programs[idx]->getProgramID(), GL_ACTIVE_UNIFORMS, &count);
 	
 	GLchar name[256];
 	GLsizei length;
 	GLint size;
 	GLenum type;
 	for (GLint i = 0; i < count; i++) {
-	    glGetActiveUniform(program.getProgramID(), (GLuint)i, ARRAYSIZE(name),
+	    glGetActiveUniform(programs[idx]->getProgramID(), (GLuint)i, ARRAYSIZE(name),
 	                       &length, &size, &type, name);
 	    name[length] = '\0';
 
 	    const juce::String nameStr = name;
 	    bool isIntrinsic;
-	    if (!checkIntrinsicUniform(nameStr, type, size, isIntrinsic)) {
+	    if (!checkIntrinsicUniform(nameStr, type, size, isIntrinsic, idx)) {
 	        return false;
 	    }
 	    
@@ -270,11 +262,11 @@ bool GLRenderer::buildShaderProgram()
 	        }
 	        
 	        if (type == GL_FLOAT) {
-	            uniformFloats.emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-	                (new juce::OpenGLShaderProgram::Uniform(program, name))));
+	            uniformFloats[idx].emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+	                (new juce::OpenGLShaderProgram::Uniform(*programs[idx], name))));
 	        } else if (type == GL_INT) {
-	            uniformInts.emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-	                (new juce::OpenGLShaderProgram::Uniform(program, name))));
+	            uniformInts[idx].emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+	                (new juce::OpenGLShaderProgram::Uniform(*programs[idx], name))));
 	        } else {
 	            juce::String message = "Parameter uniform \"";
 	            message += name;
@@ -327,21 +319,4 @@ void GLRenderer::alertError(const juce::String &title,
 {
     juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
 	                                       title, message);
-}
-
-void GLRenderer::setShader(const juce::String &shaderPath)
-{
-    sShaderPath = shaderPath;
-    sShaderString = "";
-    newShaderProgram = true;
-}
-
-
-GLRenderer::DoubleClickListener::DoubleClickListener(GLRenderer *parent)
- : parent(parent)
-{ }
-
-void GLRenderer::DoubleClickListener::mouseDoubleClick(const juce::MouseEvent &event)
-{
-    parent->setShader(sShaderPath);
 }
