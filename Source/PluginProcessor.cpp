@@ -238,6 +238,11 @@ void ShadertoyAudioProcessor::removeShaderFileEntry(int idx)
 void ShadertoyAudioProcessor::setShaderFile(int idx, juce::String shaderFile)
 {
     shaderFiles[idx] = std::move(shaderFile);
+    reloadShaderFile(idx);
+}
+
+void ShadertoyAudioProcessor::reloadShaderFile(int idx)
+{
     juce::File file(shaderFiles[idx]);
     shaderStrings[idx] = file.loadFileAsString();
 }

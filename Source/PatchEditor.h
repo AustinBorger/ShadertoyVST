@@ -49,6 +49,7 @@ private:
 
         void newRow();
         void deleteSelectedRow();
+        void reloadSelectedRow();
         
     private:
         juce::Font font { 14.0f };
@@ -62,6 +63,7 @@ private:
     juce::TableListBox shaderListBox;
     juce::TextButton newShaderButton;
     juce::TextButton deleteButton;
+    juce::TextButton reloadButton;
     
     ShaderListBoxModel shaderListBoxModel;
     ShadertoyAudioProcessorEditor *editor;

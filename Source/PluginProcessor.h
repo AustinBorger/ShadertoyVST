@@ -60,6 +60,7 @@ public:
     void addShaderFileEntry();
     void removeShaderFileEntry(int idx);
     void setShaderFile(int idx, juce::String shaderFile);
+    void reloadShaderFile(int idx);
     const juce::String &getShaderFile(int idx);
     const juce::String &getShaderString(int idx);
     size_t getNumShaderFiles();

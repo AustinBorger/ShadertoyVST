@@ -36,6 +36,10 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
     addAndMakeVisible(deleteButton);
     deleteButton.setButtonText("Delete");
     deleteButton.addListener(this);
+    
+    addAndMakeVisible(reloadButton);
+    reloadButton.setButtonText("Reload");
+    reloadButton.addListener(this);
 }
 
 PatchEditor::~PatchEditor()
@@ -63,12 +67,15 @@ void PatchEditor::resized()
     shaderListBox.getHeader().setColumnWidth(0, 40);
     shaderListBox.getHeader().setColumnWidth(1, shaderListBounds.getWidth() - 40);
     
-    int newButtonWidth = 75;
-    int deleteButtonWidth = 75;
+    int buttonWidth = 75;
     int space = 10;
-    int totalWidth = newButtonWidth + deleteButtonWidth + space;
-    newShaderButton.setBounds((shaderListBounds.getWidth() - totalWidth) / 2, getHeight() - 30, newButtonWidth, 20);
-    deleteButton.setBounds((shaderListBounds.getWidth() - totalWidth) / 2 + newButtonWidth + space, getHeight() - 30, deleteButtonWidth, 20);
+    int totalWidth = buttonWidth + space + buttonWidth + space + buttonWidth;
+    int newShaderX = (shaderListBounds.getWidth() - totalWidth) / 2;
+    int deleteX = newShaderX + buttonWidth + space;
+    int reloadX = deleteX + buttonWidth + space;
+    newShaderButton.setBounds(newShaderX, getHeight() - 30, buttonWidth, 20);
+    deleteButton.setBounds(deleteX, getHeight() - 30, buttonWidth, 20);
+    reloadButton.setBounds(reloadX, getHeight() - 30, buttonWidth, 20);
 }
 
 void PatchEditor::buttonClicked(juce::Button *button)
@@ -77,6 +84,8 @@ void PatchEditor::buttonClicked(juce::Button *button)
         shaderListBoxModel.newRow();
     } else if (button == &deleteButton) {
         shaderListBoxModel.deleteSelectedRow();
+    } else if (button == &reloadButton) {
+        shaderListBoxModel.reloadSelectedRow();
     }
 }
 
@@ -167,6 +176,14 @@ void PatchEditor::ShaderListBoxModel::deleteSelectedRow()
 {
     if (selectedRow > -1) {
         processor.removeShaderFileEntry(selectedRow);
+        box->updateContent();
+    }
+}
+
+void PatchEditor::ShaderListBoxModel::reloadSelectedRow()
+{
+    if (selectedRow > -1) {
+        processor.reloadShaderFile(selectedRow);
         box->updateContent();
     }
 }
