@@ -20,14 +20,15 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
 {
     int width = GLRenderer::VISU_WIDTH * 2;
     int height = getAppropriateHeight(width);
+    juce::Colour bgColor = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
 
     setSize(width, height);
     setResizable(false, false);
 
     addAndMakeVisible(tabs);
     tabs.setBounds(getBounds());
-    tabs.addTab("Patch", juce::Colours::grey, &patchEditor, false);
-    tabs.addTab("Visualizer", juce::Colours::grey, &glRenderer, false);
+    tabs.addTab("Patch", bgColor, &patchEditor, false);
+    tabs.addTab("Visualizer", bgColor, &glRenderer, false);
 
     patchEditor.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
     glRenderer.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
@@ -40,9 +41,8 @@ ShadertoyAudioProcessorEditor::~ShadertoyAudioProcessorEditor()
 //==============================================================================
 void ShadertoyAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.setGradientFill(
-        juce::ColourGradient(juce::Colours::grey, 0, 0,
-                             juce::Colours::grey, 0, (float) getHeight(), false));
+    juce::Colour bgColor = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
+    g.setColour(bgColor);
     g.fillAll();
 }
 
