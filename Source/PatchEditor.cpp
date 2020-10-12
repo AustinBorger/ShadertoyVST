@@ -155,8 +155,12 @@ void PatchEditor::ShaderListBoxModel::cellDoubleClicked(
 
 void PatchEditor::ShaderListBoxModel::newRow()
 {
-    processor.addShaderFileEntry();
-    box->updateContent();
+    juce::FileChooser fileChooser("Choose Shader File", juce::File::getSpecialLocation(juce::File::userHomeDirectory), "*.glsl");
+    if (fileChooser.browseForFileToOpen()) {
+        processor.addShaderFileEntry();
+        processor.setShaderFile(processor.getNumShaderFiles() - 1, fileChooser.getResult().getFullPathName());
+        box->updateContent();
+    }
 }
 
 void PatchEditor::ShaderListBoxModel::deleteSelectedRow()
