@@ -218,6 +218,11 @@ int ShadertoyAudioProcessor::getUniformInt(int i)
     return intParams[i]->get();
 }
 
+int ShadertoyAudioProcessor::getProgramIdx()
+{
+    return programParam->get();
+}
+
 void ShadertoyAudioProcessor::addShaderFileEntry()
 {
     shaderFiles.emplace_back();

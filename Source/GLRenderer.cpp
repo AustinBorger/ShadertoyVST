@@ -122,38 +122,46 @@ void GLRenderer::renderOpenGL()
 
     if (validState) {
         double scaleFactor = glContext.getRenderingScale(); // DPI scaling
-
-        /*
-         * First draw to fixed-size framebuffer
-         */
-        glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-        glBindTexture(GL_TEXTURE_2D, mRenderTexture);
-        glViewport(0, 0, VISU_WIDTH, VISU_HEIGHT);
-        programs[0]->use();
+        int programIdx = processor.getProgramIdx();
         
-        if (resolutionIntrinsics[0] != nullptr) {
-            resolutionIntrinsics[0]->set(VISU_WIDTH, VISU_HEIGHT);
+        if (programIdx < programs.size()) {
+            /*
+             * First draw to fixed-size framebuffer
+             */
+            glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+            glBindTexture(GL_TEXTURE_2D, mRenderTexture);
+            glViewport(0, 0, VISU_WIDTH, VISU_HEIGHT);
+            programs[programIdx]->use();
+        
+            if (resolutionIntrinsics[programIdx] != nullptr) {
+                resolutionIntrinsics[programIdx]->set(VISU_WIDTH, VISU_HEIGHT);
+            }
+        
+            for (int i = 0; i < uniformFloats[programIdx].size(); i++) {
+                float val = processor.getUniformFloat(i);
+                uniformFloats[programIdx][i]->set(val);
+            }
+        
+            for (int i = 0; i < uniformInts[programIdx].size(); i++) {
+                int val = processor.getUniformInt(i);
+                uniformInts[programIdx][i]->set(val);
+            }
+        
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        
+            /*
+             * Now stretch to the render area
+             */
+            glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, getWidth() * scaleFactor, getHeight() * scaleFactor);
+            copyProgram.use();
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        } else {
+            glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, getWidth() * scaleFactor, getHeight() * scaleFactor);
+            glClearColor(0, 0, 0, 1);
+            glClear(GL_COLOR_BUFFER_BIT);
         }
-        
-        for (int i = 0; i < uniformFloats[0].size(); i++) {
-            float val = processor.getUniformFloat(i);
-            uniformFloats[0][i]->set(val);
-        }
-        
-        for (int i = 0; i < uniformInts[0].size(); i++) {
-            int val = processor.getUniformInt(i);
-            uniformInts[0][i]->set(val);
-        }
-        
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        
-        /*
-         * Now stretch to the render area
-         */
-        glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, getWidth() * scaleFactor, getHeight() * scaleFactor);
-        copyProgram.use();
-        glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 }
 

@@ -55,6 +55,7 @@ public:
     
     float getUniformFloat(int i);
     int getUniformInt(int i);
+    int getProgramIdx();
     
     void addShaderFileEntry();
     void removeShaderFileEntry(int idx);
