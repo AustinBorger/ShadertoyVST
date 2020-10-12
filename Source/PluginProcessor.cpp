@@ -178,17 +178,34 @@ juce::AudioProcessorEditor* ShadertoyAudioProcessor::createEditor()
 }
 
 //==============================================================================
-void ShadertoyAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void ShadertoyAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    juce::XmlElement xml("ShadertoyState");
+    for (int i = 0; i < shaderFiles.size(); i++) {
+        juce::XmlElement *shaderFileElement = new juce::XmlElement("ShaderFile");
+        shaderFileElement->setAttribute("Path", shaderFiles[i]);
+        xml.addChildElement(shaderFileElement);
+    }
+    copyXmlToBinary(xml, destData);
 }
 
-void ShadertoyAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void ShadertoyAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    shaderFiles.clear();
+    std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
+    if (xmlState.get() != nullptr) {
+        if (xmlState->hasTagName("ShadertoyState")) {
+            juce::XmlElement* child = xmlState->getFirstChildElement();
+            while (child != nullptr) {
+                if (child->hasTagName("ShaderFile")) {
+                    const juce::String &shaderFile = child->getStringAttribute("Path");
+                    addShaderFileEntry();
+                    setShaderFile(getNumShaderFiles() - 1, shaderFile);
+                }
+                child = child->getNextElement();
+            }
+        }
+    }
 }
 
 void ShadertoyAudioProcessor::addUniformFloat(const juce::String &name)
