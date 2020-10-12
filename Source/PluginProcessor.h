@@ -70,6 +70,7 @@ private:
 
     std::vector<std::unique_ptr<juce::AudioParameterFloat>> floatParams;
     std::vector<std::unique_ptr<juce::AudioParameterInt>> intParams;
+    std::unique_ptr<juce::AudioParameterInt> programParam;
     std::vector<juce::String> shaderFiles;
     std::vector<juce::String> shaderStrings;
 
