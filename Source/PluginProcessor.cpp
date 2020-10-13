@@ -181,9 +181,9 @@ juce::AudioProcessorEditor* ShadertoyAudioProcessor::createEditor()
 void ShadertoyAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     juce::XmlElement xml("ShadertoyState");
-    for (int i = 0; i < shaderFiles.size(); i++) {
+    for (int i = 0; i < shaderData.size(); i++) {
         juce::XmlElement *shaderFileElement = new juce::XmlElement("ShaderFile");
-        shaderFileElement->setAttribute("Path", shaderFiles[i]);
+        shaderFileElement->setAttribute("Path", shaderData[i].path);
         xml.addChildElement(shaderFileElement);
     }
     copyXmlToBinary(xml, destData);
@@ -191,7 +191,7 @@ void ShadertoyAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 
 void ShadertoyAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-    shaderFiles.clear();
+    shaderData.clear();
     std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
     if (xmlState.get() != nullptr) {
         if (xmlState->hasTagName("ShadertoyState")) {
@@ -242,46 +242,44 @@ int ShadertoyAudioProcessor::getProgramIdx()
 
 void ShadertoyAudioProcessor::addShaderFileEntry()
 {
-    shaderFiles.emplace_back();
-    shaderStrings.emplace_back();
+    shaderData.emplace_back();
 }
 
 void ShadertoyAudioProcessor::removeShaderFileEntry(int idx)
 {
-    shaderFiles.erase(shaderFiles.begin() + idx);
-    shaderStrings.erase(shaderStrings.begin() + idx);
+    shaderData.erase(shaderData.begin() + idx);
 }
 
 void ShadertoyAudioProcessor::setShaderFile(int idx, juce::String shaderFile)
 {
-    shaderFiles[idx] = std::move(shaderFile);
+    shaderData[idx].path = std::move(shaderFile);
     reloadShaderFile(idx);
 }
 
 void ShadertoyAudioProcessor::reloadShaderFile(int idx)
 {
-    juce::File file(shaderFiles[idx]);
-    shaderStrings[idx] = file.loadFileAsString();
+    juce::File file(shaderData[idx].path);
+    shaderData[idx].source = file.loadFileAsString();
 }
 
 const juce::String &ShadertoyAudioProcessor::getShaderFile(int idx)
 {
-    return shaderFiles[idx];
+    return shaderData[idx].path;
 }
 
 const juce::String &ShadertoyAudioProcessor::getShaderString(int idx)
 {
-    return shaderStrings[idx];
+    return shaderData[idx].source;
 }
 
 size_t ShadertoyAudioProcessor::getNumShaderFiles()
 {
-    return shaderFiles.size();
+    return shaderData.size();
 }
 
 bool ShadertoyAudioProcessor::hasShaderFiles()
 {
-    return !shaderFiles.empty();
+    return !shaderData.empty();
 }
 
 //==============================================================================

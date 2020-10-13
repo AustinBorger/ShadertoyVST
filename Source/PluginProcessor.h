@@ -16,6 +16,15 @@
 class ShadertoyAudioProcessor  : public juce::AudioProcessor
 {
 public:
+    struct ShaderData
+    {
+        juce::String path;
+        juce::String source;
+        bool fixedSizeBuffer;
+        int fixedSizeWidth;
+        int fixedSizeHeight;
+    };
+
     //==============================================================================
     ShadertoyAudioProcessor();
     ~ShadertoyAudioProcessor() override;
@@ -73,8 +82,7 @@ private:
     std::vector<std::unique_ptr<juce::AudioParameterFloat>> floatParams;
     std::vector<std::unique_ptr<juce::AudioParameterInt>> intParams;
     std::unique_ptr<juce::AudioParameterInt> programParam;
-    std::vector<juce::String> shaderFiles;
-    std::vector<juce::String> shaderStrings;
+    std::vector<ShaderData> shaderData;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ShadertoyAudioProcessor)
