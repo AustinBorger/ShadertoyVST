@@ -53,6 +53,7 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
     addAndMakeVisible(fixedSizeWidthEditor);
     fixedSizeWidthEditor.setMultiLine(false);
     fixedSizeWidthEditor.setInputRestrictions(4, "0123456789");
+    fixedSizeWidthEditor.addListener(this);
     
     addAndMakeVisible(fixedSizeWidthLabel);
     fixedSizeWidthLabel.setText("Width:", juce::NotificationType::dontSendNotification);
@@ -60,11 +61,12 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
     addAndMakeVisible(fixedSizeHeightEditor);
     fixedSizeHeightEditor.setMultiLine(false);
     fixedSizeHeightEditor.setInputRestrictions(4, "0123456789");
+    fixedSizeHeightEditor.addListener(this);
     
     addAndMakeVisible(fixedSizeHeightLabel);
     fixedSizeHeightLabel.setText("Height:", juce::NotificationType::dontSendNotification);
     
-    greyOutFixedSizeEditors();
+    greyOutTopRightRegion();
 }
 
 PatchEditor::~PatchEditor()
@@ -146,11 +148,28 @@ void PatchEditor::buttonClicked(juce::Button *button)
         } else {
             greyOutFixedSizeEditors();
         }
+        processor.setShaderFixedSizeBuffer(shaderListBoxModel.getSelectedRow(),
+                                           fixedSizeButton.getToggleState());
+    }
+}
+
+void PatchEditor::textEditorTextChanged(juce::TextEditor &textEditor)
+{
+    if (&textEditor == &fixedSizeWidthEditor) {
+        int width = textEditor.getText().getIntValue();
+        processor.setShaderFixedSizeWidth(shaderListBoxModel.getSelectedRow(), width);
+    } else if (&textEditor == &fixedSizeHeightEditor) {
+        int height = textEditor.getText().getIntValue();
+        processor.setShaderFixedSizeHeight(shaderListBoxModel.getSelectedRow(), height);
     }
 }
 
 void PatchEditor::greyOutFixedSizeEditors()
 {
+    if (fixedSizeWidthEditor.isReadOnly()) {
+        return;
+    }
+
     juce::Colour fixedSizeWidthBg = fixedSizeWidthEditor.findColour(juce::TextEditor::backgroundColourId);
     juce::Colour fixedSizeHeightBg = fixedSizeHeightEditor.findColour(juce::TextEditor::backgroundColourId);
     
@@ -165,12 +184,16 @@ void PatchEditor::greyOutFixedSizeEditors()
                                                           
     fixedSizeWidthEditor.setReadOnly(true);
     fixedSizeHeightEditor.setReadOnly(true);
-    fixedSizeWidthEditor.setText("");
-    fixedSizeHeightEditor.setText("");
+    fixedSizeWidthEditor.setText("", false);
+    fixedSizeHeightEditor.setText("", false);
 }
 
 void PatchEditor::activateFixedSizeEditors()
 {
+    if (!fixedSizeWidthEditor.isReadOnly()) {
+        return;
+    }
+
     juce::Colour fixedSizeWidthBg = fixedSizeWidthEditor.findColour(juce::TextEditor::backgroundColourId);
     juce::Colour fixedSizeHeightBg = fixedSizeHeightEditor.findColour(juce::TextEditor::backgroundColourId);
     
@@ -182,9 +205,43 @@ void PatchEditor::activateFixedSizeEditors()
                                     juce::Colour::fromRGB(255 - (255 - fixedSizeHeightBg.getRed()) * 2,
                                                           255 - (255 - fixedSizeHeightBg.getGreen()) * 2,
                                                           255 - (255 - fixedSizeHeightBg.getBlue()) * 2));
-                                                          
+                                             
+    if (shaderListBoxModel.getSelectedRow() > -1) {
+        fixedSizeWidthEditor.setText(
+            std::to_string(processor.getShaderFixedSizeWidth(shaderListBoxModel.getSelectedRow())));
+        fixedSizeHeightEditor.setText(
+            std::to_string(processor.getShaderFixedSizeHeight(shaderListBoxModel.getSelectedRow())));
+    }
+
     fixedSizeWidthEditor.setReadOnly(false);
     fixedSizeHeightEditor.setReadOnly(false);
+}
+
+void PatchEditor::greyOutTopRightRegion()
+{
+    fixedSizeButton.setEnabled(false);
+    
+    if (!fixedSizeWidthEditor.isReadOnly()) {
+        greyOutFixedSizeEditors();
+    }
+}
+
+void PatchEditor::loadTopRightRegion(int shaderIdx)
+{
+    fixedSizeButton.setEnabled(true);
+    fixedSizeButton.setToggleState(processor.getShaderFixedSizeBuffer(shaderIdx),
+                                   juce::NotificationType::dontSendNotification);
+    
+    if (fixedSizeButton.getToggleState()) {
+        activateFixedSizeEditors();
+    } else {
+        greyOutFixedSizeEditors();
+    }
+    
+    if (processor.getShaderFixedSizeBuffer(shaderIdx)) {
+        fixedSizeWidthEditor.setText(std::to_string(processor.getShaderFixedSizeWidth(shaderIdx)));
+        fixedSizeHeightEditor.setText(std::to_string(processor.getShaderFixedSizeHeight(shaderIdx)));
+    }
 }
 
 PatchEditor::ShaderListBoxModel::ShaderListBoxModel(juce::TableListBox *box,
@@ -246,6 +303,7 @@ void PatchEditor::ShaderListBoxModel::paintCell(
 void PatchEditor::ShaderListBoxModel::selectedRowsChanged(int lastRowSelected)
 {
     selectedRow = lastRowSelected;
+    parent->loadTopRightRegion(selectedRow);
 }
 
 void PatchEditor::ShaderListBoxModel::cellDoubleClicked(
@@ -284,4 +342,9 @@ void PatchEditor::ShaderListBoxModel::reloadSelectedRow()
         processor.reloadShaderFile(selectedRow);
         box->updateContent();
     }
+}
+
+int PatchEditor::ShaderListBoxModel::getSelectedRow()
+{
+    return selectedRow;
 }

@@ -19,7 +19,8 @@ class ShadertoyAudioProcessorEditor;
 /*
 */
 class PatchEditor  : public juce::Component,
-                     public juce::Button::Listener
+                     public juce::Button::Listener,
+                     public juce::TextEditor::Listener
 {
 public:
     PatchEditor(ShadertoyAudioProcessorEditor *editor,
@@ -29,6 +30,7 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
     void buttonClicked(juce::Button *) override;
+    void textEditorTextChanged(juce::TextEditor &) override;
 
 private:
     class ShaderListBoxModel : public juce::TableListBoxModel
@@ -50,6 +52,7 @@ private:
         void newRow();
         void deleteSelectedRow();
         void reloadSelectedRow();
+        int getSelectedRow();
         
     private:
         juce::Font font { 14.0f };
@@ -62,6 +65,8 @@ private:
     
     void greyOutFixedSizeEditors();
     void activateFixedSizeEditors();
+    void greyOutTopRightRegion();
+    void loadTopRightRegion(int shaderIdx);
 
     juce::TableListBox shaderListBox;
     juce::TextButton newShaderButton;

@@ -20,9 +20,9 @@ public:
     {
         juce::String path;
         juce::String source;
-        bool fixedSizeBuffer;
-        int fixedSizeWidth;
-        int fixedSizeHeight;
+        bool fixedSizeBuffer = false;
+        int fixedSizeWidth = 640;
+        int fixedSizeHeight = 360;
     };
 
     //==============================================================================
