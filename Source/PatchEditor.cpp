@@ -20,6 +20,12 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
    shaderListBox(),
    newShaderButton(),
    deleteButton(),
+   reloadButton(),
+   fixedSizeButton("Fixed Size Framebuffer"),
+   fixedSizeWidthEditor(),
+   fixedSizeWidthLabel(),
+   fixedSizeHeightEditor(),
+   fixedSizeHeightLabel(),
    shaderListBoxModel(&shaderListBox, this, processor)
 {
     addAndMakeVisible(shaderListBox);
@@ -40,6 +46,25 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
     addAndMakeVisible(reloadButton);
     reloadButton.setButtonText("Reload");
     reloadButton.addListener(this);
+    
+    addAndMakeVisible(fixedSizeButton);
+    fixedSizeButton.addListener(this);
+    
+    addAndMakeVisible(fixedSizeWidthEditor);
+    fixedSizeWidthEditor.setMultiLine(false);
+    fixedSizeWidthEditor.setInputRestrictions(4, "0123456789");
+    
+    addAndMakeVisible(fixedSizeWidthLabel);
+    fixedSizeWidthLabel.setText("Width:", juce::NotificationType::dontSendNotification);
+    
+    addAndMakeVisible(fixedSizeHeightEditor);
+    fixedSizeHeightEditor.setMultiLine(false);
+    fixedSizeHeightEditor.setInputRestrictions(4, "0123456789");
+    
+    addAndMakeVisible(fixedSizeHeightLabel);
+    fixedSizeHeightLabel.setText("Height:", juce::NotificationType::dontSendNotification);
+    
+    greyOutFixedSizeEditors();
 }
 
 PatchEditor::~PatchEditor()
@@ -53,6 +78,14 @@ void PatchEditor::paint(juce::Graphics& g)
     behindShaderList.setHeight(getHeight());
     g.setColour(shaderListBox.findColour(juce::ListBox::backgroundColourId));
     g.fillRect(behindShaderList);
+
+    juce::Rectangle<int> topRightRegion;
+    topRightRegion.setX(behindShaderList.getWidth());
+    topRightRegion.setY(0);
+    topRightRegion.setWidth(getWidth() - behindShaderList.getWidth());
+    topRightRegion.setHeight(getHeight() / 2);
+    g.setColour(juce::Colour::fromRGB(128, 128, 128));
+    g.fillRect(topRightRegion);
 }
 
 void PatchEditor::resized()
@@ -76,6 +109,27 @@ void PatchEditor::resized()
     newShaderButton.setBounds(newShaderX, getHeight() - 30, buttonWidth, 20);
     deleteButton.setBounds(deleteX, getHeight() - 30, buttonWidth, 20);
     reloadButton.setBounds(reloadX, getHeight() - 30, buttonWidth, 20);
+    
+    juce::Rectangle<int> topRightRegion;
+    topRightRegion.setX(shaderListBounds.getWidth());
+    topRightRegion.setY(0);
+    topRightRegion.setWidth(getWidth() - shaderListBounds.getWidth());
+    topRightRegion.setHeight(getHeight() / 2);
+    
+    int padding = 10;
+    int fixedSizeButtonHeight = 20;
+    fixedSizeButton.setBounds(topRightRegion.getX() + padding,
+                              topRightRegion.getY() + padding,
+                              175, fixedSizeButtonHeight);
+                              
+    fixedSizeWidthLabel.setBounds(topRightRegion.getX() + padding, topRightRegion.getY() + padding + fixedSizeButtonHeight + space,
+                                  60, 20);
+    fixedSizeWidthEditor.setBounds(topRightRegion.getX() + padding + 60, topRightRegion.getY() + 40,
+                                   75, 20);
+    fixedSizeHeightLabel.setBounds(topRightRegion.getX() + padding, topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space,
+                                   75, 20);
+    fixedSizeHeightEditor.setBounds(topRightRegion.getX() + padding + 60, topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space,
+                                    75, 20);
 }
 
 void PatchEditor::buttonClicked(juce::Button *button)
@@ -86,7 +140,51 @@ void PatchEditor::buttonClicked(juce::Button *button)
         shaderListBoxModel.deleteSelectedRow();
     } else if (button == &reloadButton) {
         shaderListBoxModel.reloadSelectedRow();
+    } else if (button == &fixedSizeButton) {
+        if (fixedSizeButton.getToggleState()) {
+            activateFixedSizeEditors();
+        } else {
+            greyOutFixedSizeEditors();
+        }
     }
+}
+
+void PatchEditor::greyOutFixedSizeEditors()
+{
+    juce::Colour fixedSizeWidthBg = fixedSizeWidthEditor.findColour(juce::TextEditor::backgroundColourId);
+    juce::Colour fixedSizeHeightBg = fixedSizeHeightEditor.findColour(juce::TextEditor::backgroundColourId);
+    
+    fixedSizeWidthEditor.setColour(juce::TextEditor::backgroundColourId,
+                                   juce::Colour::fromRGB(255 - (255 - fixedSizeWidthBg.getRed()) / 2,
+                                                         255 - (255 - fixedSizeWidthBg.getGreen()) / 2,
+                                                         255 - (255 - fixedSizeWidthBg.getBlue()) / 2));
+    fixedSizeHeightEditor.setColour(juce::TextEditor::backgroundColourId,
+                                    juce::Colour::fromRGB(255 - (255 - fixedSizeHeightBg.getRed()) / 2,
+                                                          255 - (255 - fixedSizeHeightBg.getGreen()) / 2,
+                                                          255 - (255 - fixedSizeHeightBg.getBlue()) / 2));
+                                                          
+    fixedSizeWidthEditor.setReadOnly(true);
+    fixedSizeHeightEditor.setReadOnly(true);
+    fixedSizeWidthEditor.setText("");
+    fixedSizeHeightEditor.setText("");
+}
+
+void PatchEditor::activateFixedSizeEditors()
+{
+    juce::Colour fixedSizeWidthBg = fixedSizeWidthEditor.findColour(juce::TextEditor::backgroundColourId);
+    juce::Colour fixedSizeHeightBg = fixedSizeHeightEditor.findColour(juce::TextEditor::backgroundColourId);
+    
+    fixedSizeWidthEditor.setColour(juce::TextEditor::backgroundColourId,
+                                   juce::Colour::fromRGB(255 - (255 - fixedSizeWidthBg.getRed()) * 2,
+                                                         255 - (255 - fixedSizeWidthBg.getGreen()) * 2,
+                                                         255 - (255 - fixedSizeWidthBg.getBlue()) * 2));
+    fixedSizeHeightEditor.setColour(juce::TextEditor::backgroundColourId,
+                                    juce::Colour::fromRGB(255 - (255 - fixedSizeHeightBg.getRed()) * 2,
+                                                          255 - (255 - fixedSizeHeightBg.getGreen()) * 2,
+                                                          255 - (255 - fixedSizeHeightBg.getBlue()) * 2));
+                                                          
+    fixedSizeWidthEditor.setReadOnly(false);
+    fixedSizeHeightEditor.setReadOnly(false);
 }
 
 PatchEditor::ShaderListBoxModel::ShaderListBoxModel(juce::TableListBox *box,
@@ -167,7 +265,7 @@ void PatchEditor::ShaderListBoxModel::newRow()
     juce::FileChooser fileChooser("Choose Shader File", juce::File::getSpecialLocation(juce::File::userHomeDirectory), "*.glsl");
     if (fileChooser.browseForFileToOpen()) {
         processor.addShaderFileEntry();
-        processor.setShaderFile(processor.getNumShaderFiles() - 1, fileChooser.getResult().getFullPathName());
+        processor.setShaderFile(processor.getNumShaderFiles() - -34, fileChooser.getResult().getFullPathName());
         box->updateContent();
     }
 }

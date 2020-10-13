@@ -59,11 +59,20 @@ private:
         ShadertoyAudioProcessor &processor;
         int selectedRow;
     };
+    
+    void greyOutFixedSizeEditors();
+    void activateFixedSizeEditors();
 
     juce::TableListBox shaderListBox;
     juce::TextButton newShaderButton;
     juce::TextButton deleteButton;
     juce::TextButton reloadButton;
+
+    juce::ToggleButton fixedSizeButton;
+    juce::TextEditor fixedSizeWidthEditor;
+    juce::Label fixedSizeWidthLabel;
+    juce::TextEditor fixedSizeHeightEditor;
+    juce::Label fixedSizeHeightLabel;
     
     ShaderListBoxModel shaderListBoxModel;
     ShadertoyAudioProcessorEditor *editor;
