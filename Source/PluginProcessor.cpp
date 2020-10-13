@@ -184,6 +184,14 @@ void ShadertoyAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     for (int i = 0; i < shaderData.size(); i++) {
         juce::XmlElement *shaderFileElement = new juce::XmlElement("ShaderFile");
         shaderFileElement->setAttribute("Path", shaderData[i].path);
+        
+        if (shaderData[i].fixedSizeBuffer) {
+            juce::XmlElement *fixedSizeData = new juce::XmlElement("FixedSizeBuffer");
+            fixedSizeData->setAttribute("Width", shaderData[i].fixedSizeWidth);
+            fixedSizeData->setAttribute("Height", shaderData[i].fixedSizeHeight);
+            shaderFileElement->addChildElement(fixedSizeData);
+        }
+        
         xml.addChildElement(shaderFileElement);
     }
     copyXmlToBinary(xml, destData);
@@ -201,6 +209,17 @@ void ShadertoyAudioProcessor::setStateInformation(const void* data, int sizeInBy
                     const juce::String &shaderFile = child->getStringAttribute("Path");
                     addShaderFileEntry();
                     setShaderFile(getNumShaderFiles() - 1, shaderFile);
+                    juce::XmlElement *shaderChild = child->getFirstChildElement();
+                    while (shaderChild != nullptr) {
+                        if (shaderChild->hasTagName("FixedSizeBuffer")) {
+                            shaderData.back().fixedSizeBuffer = true;
+                            shaderData.back().fixedSizeWidth =
+                                shaderChild->getIntAttribute("Width", shaderData.back().fixedSizeWidth);
+                            shaderData.back().fixedSizeHeight =
+                                shaderChild->getIntAttribute("Height", shaderData.back().fixedSizeHeight);
+                        }
+                        shaderChild = shaderChild->getNextElement();
+                    }
                 }
                 child = child->getNextElement();
             }
