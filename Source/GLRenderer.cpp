@@ -38,18 +38,6 @@ static const juce::String copyFrag =
     "FragColor = texture(visuTexture, vec2(texCoord.x / widthRatio, texCoord.y / heightRatio));\n"
 "}\n";
 
-static const juce::String frag =
-"#version 330\n"
-"out vec4 FragColor;\n"
-"uniform float red;\n"
-"uniform float green;\n"
-"uniform float blue;\n"
-"\n"
-"void main()\n"
-"{\n"
-"    FragColor = vec4(red, green, blue, 1.0);\n"
-"}\n";
-
 //==============================================================================
 GLRenderer::GLRenderer(ShadertoyAudioProcessor& processor,
                        juce::OpenGLContext &glContext)
@@ -86,7 +74,7 @@ void GLRenderer::newOpenGLContextCreated()
         goto failure;
     }
     
-    for (int i = 0; i < max(processor.getNumShaderFiles(), 1); i++) {
+    for (int i = 0; i < processor.getNumShaderFiles(); i++) {
         std::unique_ptr<juce::OpenGLShaderProgram> program(new juce::OpenGLShaderProgram(glContext));
         programs.emplace_back(std::move(program));
         resolutionIntrinsics.emplace_back();
@@ -129,8 +117,8 @@ void GLRenderer::renderOpenGL()
     if (validState) {
         double scaleFactor = glContext.getRenderingScale(); // DPI scaling
         int programIdx = processor.getProgramIdx();
-        int backBufferWidth = getWidth() * scaleFactor;
-        int backBufferHeight = getHeight() * scaleFactor;
+        int backBufferWidth = (int)(getWidth() * scaleFactor);
+        int backBufferHeight = (int)(getHeight() * scaleFactor);
         
         if (programIdx < programs.size()) {
             programs[programIdx]->use();
@@ -150,7 +138,8 @@ void GLRenderer::renderOpenGL()
                 int framebufferHeight = processor.getShaderFixedSizeHeight(programIdx);
 
                 if (resolutionIntrinsics[programIdx] != nullptr) {
-                    resolutionIntrinsics[programIdx]->set(framebufferWidth, framebufferHeight);
+                    resolutionIntrinsics[programIdx]->set((GLfloat)framebufferWidth,
+                                                          (GLfloat)framebufferHeight);
                 }
 
                 /*
@@ -165,7 +154,7 @@ void GLRenderer::renderOpenGL()
                  * Now stretch to the render area
                  */
                 copyProgram.use();
-                
+
                 widthRatio->set((float)mFramebufferWidth / (float)framebufferWidth);
                 heightRatio->set((float)mFramebufferHeight / (float)framebufferHeight);
                 
@@ -174,7 +163,8 @@ void GLRenderer::renderOpenGL()
                 glDrawArrays(GL_TRIANGLES, 0, 3);
             } else {
                 if (resolutionIntrinsics[programIdx] != nullptr) {
-                    resolutionIntrinsics[programIdx]->set(backBufferWidth, backBufferHeight);
+                    resolutionIntrinsics[programIdx]->set((GLfloat)backBufferWidth,
+                                                          (GLfloat)backBufferHeight);
                 }
 
                 /*
@@ -189,7 +179,7 @@ void GLRenderer::renderOpenGL()
              * Undefined program, just clear the back buffer
              */
             glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glViewport(0, 0, getWidth() * scaleFactor, getHeight() * scaleFactor);
+            glViewport(0, 0, backBufferWidth, backBufferHeight);
             glClearColor(0, 0, 0, 1);
             glClear(GL_COLOR_BUFFER_BIT);
         }
@@ -258,16 +248,8 @@ failure:
 
 bool GLRenderer::buildShaderProgram(int idx)
 {
-    juce::String shaderString;
-    
-    if (processor.getNumShaderFiles() <= idx || processor.getShaderString(idx).isEmpty()) {
-        shaderString = frag;
-    } else {
-        shaderString = processor.getShaderString(idx);
-    }
-
     if (!programs[idx]->addVertexShader(vert) ||
-	    !programs[idx]->addFragmentShader(shaderString) ||
+	    !programs[idx]->addFragmentShader(processor.getShaderString(idx)) ||
 	    !programs[idx]->link()) {
 	    alertError("Error building program", programs[idx]->getLastError());
 	    return false;
@@ -321,6 +303,16 @@ bool GLRenderer::buildShaderProgram(int idx)
 
 bool GLRenderer::buildCopyProgram()
 {
+    bool shouldBuildCopyProgram = false;
+    
+    for (int i = 0; i < processor.getNumShaderFiles(); i++) {
+        shouldBuildCopyProgram = shouldBuildCopyProgram || processor.getShaderFixedSizeBuffer(i);
+    }
+    
+    if (!shouldBuildCopyProgram) {
+        return true;
+    }
+
     if (!copyProgram.addVertexShader(vert) ||
         !copyProgram.addFragmentShader(copyFrag) ||
         !copyProgram.link()) {
@@ -330,6 +322,11 @@ bool GLRenderer::buildCopyProgram()
     
     GLint count;
 	glContext.extensions.glGetProgramiv(copyProgram.getProgramID(), GL_ACTIVE_UNIFORMS, &count);
+	if (count != 3) {
+	    alertError("Unexpected number of uniforms in copyProgram",
+	               "Unexpected number of uniforms (" + std::to_string(count) + ")");
+	    return false;
+	}
 	
 	GLchar name[256];
 	GLsizei length;
