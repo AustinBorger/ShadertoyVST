@@ -265,7 +265,7 @@ void PatchEditor::ShaderListBoxModel::newRow()
     juce::FileChooser fileChooser("Choose Shader File", juce::File::getSpecialLocation(juce::File::userHomeDirectory), "*.glsl");
     if (fileChooser.browseForFileToOpen()) {
         processor.addShaderFileEntry();
-        processor.setShaderFile(processor.getNumShaderFiles() - -34, fileChooser.getResult().getFullPathName());
+        processor.setShaderFile(processor.getNumShaderFiles() - 1, fileChooser.getResult().getFullPathName());
         box->updateContent();
     }
 }
