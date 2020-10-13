@@ -31,9 +31,11 @@ static const juce::String copyFrag =
 "out vec4 FragColor;\n"
 "\n"
 "uniform sampler2D visuTexture;\n"
+"uniform float widthRatio;\n"
+"uniform float heightRatio;\n"
 "\n"
 "void main() {\n"
-    "FragColor = texture(visuTexture, texCoord);\n"
+    "FragColor = texture(visuTexture, vec2(texCoord.x / widthRatio, texCoord.y / heightRatio));\n"
 "}\n";
 
 static const juce::String frag =
@@ -56,6 +58,10 @@ GLRenderer::GLRenderer(ShadertoyAudioProcessor& processor,
    programs(),
    copyProgram(glContext),
    validState(true),
+   mFramebuffer(0),
+   mRenderTexture(0),
+   mFramebufferWidth(640),
+   mFramebufferHeight(360),
    uniformFloats(),
    uniformInts()
 {
@@ -123,19 +129,11 @@ void GLRenderer::renderOpenGL()
     if (validState) {
         double scaleFactor = glContext.getRenderingScale(); // DPI scaling
         int programIdx = processor.getProgramIdx();
+        int backBufferWidth = getWidth() * scaleFactor;
+        int backBufferHeight = getHeight() * scaleFactor;
         
         if (programIdx < programs.size()) {
-            /*
-             * First draw to fixed-size framebuffer
-             */
-            glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-            glBindTexture(GL_TEXTURE_2D, mRenderTexture);
-            glViewport(0, 0, VISU_WIDTH, VISU_HEIGHT);
             programs[programIdx]->use();
-        
-            if (resolutionIntrinsics[programIdx] != nullptr) {
-                resolutionIntrinsics[programIdx]->set(VISU_WIDTH, VISU_HEIGHT);
-            }
         
             for (int i = 0; i < uniformFloats[programIdx].size(); i++) {
                 float val = processor.getUniformFloat(i);
@@ -146,17 +144,50 @@ void GLRenderer::renderOpenGL()
                 int val = processor.getUniformInt(i);
                 uniformInts[programIdx][i]->set(val);
             }
+            
+            if (processor.getShaderFixedSizeBuffer(programIdx)) {
+                int framebufferWidth = processor.getShaderFixedSizeWidth(programIdx);
+                int framebufferHeight = processor.getShaderFixedSizeHeight(programIdx);
+
+                if (resolutionIntrinsics[programIdx] != nullptr) {
+                    resolutionIntrinsics[programIdx]->set(framebufferWidth, framebufferHeight);
+                }
+
+                /*
+                 * First draw to fixed-size framebuffer
+                 */
+                glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
+                glBindTexture(GL_TEXTURE_2D, mRenderTexture);
+                glViewport(0, 0, framebufferWidth, framebufferHeight);
+                glDrawArrays(GL_TRIANGLES, 0, 3);
         
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-        
-            /*
-             * Now stretch to the render area
-             */
-            glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glViewport(0, 0, getWidth() * scaleFactor, getHeight() * scaleFactor);
-            copyProgram.use();
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+                /*
+                 * Now stretch to the render area
+                 */
+                copyProgram.use();
+                
+                widthRatio->set((float)mFramebufferWidth / (float)framebufferWidth);
+                heightRatio->set((float)mFramebufferHeight / (float)framebufferHeight);
+                
+                glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glViewport(0, 0, backBufferWidth, backBufferHeight);
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+            } else {
+                if (resolutionIntrinsics[programIdx] != nullptr) {
+                    resolutionIntrinsics[programIdx]->set(backBufferWidth, backBufferHeight);
+                }
+
+                /*
+                 * Draw directly to back buffer
+                 */
+                glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glViewport(0, 0, backBufferWidth, backBufferHeight);
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+            }
         } else {
+            /*
+             * Undefined program, just clear the back buffer
+             */
             glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glViewport(0, 0, getWidth() * scaleFactor, getHeight() * scaleFactor);
             glClearColor(0, 0, 0, 1);
@@ -296,17 +327,61 @@ bool GLRenderer::buildCopyProgram()
         alertError("Error building copy program", copyProgram.getLastError());
         return false;
     }
+    
+    GLint count;
+	glContext.extensions.glGetProgramiv(copyProgram.getProgramID(), GL_ACTIVE_UNIFORMS, &count);
+	
+	GLchar name[256];
+	GLsizei length;
+	GLint size;
+	GLenum type;
+	for (GLint i = 0; i < count; i++) {
+	    glGetActiveUniform(copyProgram.getProgramID(), (GLuint)i, ARRAYSIZE(name),
+	                       &length, &size, &type, name);
+	    name[length] = '\0';
+
+	    const juce::String nameStr = name;
+	    if (nameStr == "widthRatio") {
+	        widthRatio = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+	            (new juce::OpenGLShaderProgram::Uniform(copyProgram, name)));
+	    } else if (nameStr == "heightRatio") {
+	        heightRatio = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+	            (new juce::OpenGLShaderProgram::Uniform(copyProgram, name)));
+	    } else if (nameStr == "visuTexture") {
+	        // Nothing
+	    } else {
+	        alertError("Unrecognized uniform in copyProgram", "Unrecognized uniform " + nameStr);
+	        return false;
+	    }
+	}
 
     return true;
 }
 
 bool GLRenderer::createFramebuffer()
 {
+    // Figure out if we have to create one and how big it needs to be
+    bool shouldCreateBuffer = false;
+    mFramebufferWidth = 640;
+    mFramebufferHeight = 360;
+    
+    for (int i = 0; i < processor.getNumShaderFiles(); i++) {
+        shouldCreateBuffer = shouldCreateBuffer || processor.getShaderFixedSizeBuffer(i);
+        if (processor.getShaderFixedSizeBuffer(i)) {
+            mFramebufferWidth = max(mFramebufferWidth, processor.getShaderFixedSizeWidth(i));
+            mFramebufferHeight = max(mFramebufferHeight, processor.getShaderFixedSizeHeight(i));
+        }
+    }
+    
+    if (!shouldCreateBuffer) {
+        return true;
+    }
+    
     glContext.extensions.glGenFramebuffers(1, &mFramebuffer);
     glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
     glGenTextures(1, &mRenderTexture);
     glBindTexture(GL_TEXTURE_2D, mRenderTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, VISU_WIDTH, VISU_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mFramebufferWidth, mFramebufferHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glContext.extensions.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mRenderTexture, 0);

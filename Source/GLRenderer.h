@@ -50,10 +50,14 @@ private:
     bool validState;
     GLuint mFramebuffer;
     GLuint mRenderTexture;
+    int mFramebufferWidth;
+    int mFramebufferHeight;
     std::vector<std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>>> uniformFloats;
     std::vector<std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>>> uniformInts;
     std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> resolutionIntrinsics;
     std::vector<int> refreshList;
+    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> widthRatio;
+    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> heightRatio;
     
     PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;
     PFNGLDRAWBUFFERSPROC glDrawBuffers;
