@@ -208,9 +208,9 @@ void PatchEditor::activateFixedSizeEditors()
                                              
     if (shaderListBoxModel.getSelectedRow() > -1) {
         fixedSizeWidthEditor.setText(
-            std::to_string(processor.getShaderFixedSizeWidth(shaderListBoxModel.getSelectedRow())));
+            std::to_string(processor.getShaderFixedSizeWidth(shaderListBoxModel.getSelectedRow())), false);
         fixedSizeHeightEditor.setText(
-            std::to_string(processor.getShaderFixedSizeHeight(shaderListBoxModel.getSelectedRow())));
+            std::to_string(processor.getShaderFixedSizeHeight(shaderListBoxModel.getSelectedRow())), false);
     }
 
     fixedSizeWidthEditor.setReadOnly(false);
@@ -239,8 +239,8 @@ void PatchEditor::loadTopRightRegion(int shaderIdx)
     }
     
     if (processor.getShaderFixedSizeBuffer(shaderIdx)) {
-        fixedSizeWidthEditor.setText(std::to_string(processor.getShaderFixedSizeWidth(shaderIdx)));
-        fixedSizeHeightEditor.setText(std::to_string(processor.getShaderFixedSizeHeight(shaderIdx)));
+        fixedSizeWidthEditor.setText(std::to_string(processor.getShaderFixedSizeWidth(shaderIdx)), false);
+        fixedSizeHeightEditor.setText(std::to_string(processor.getShaderFixedSizeHeight(shaderIdx)), false);
     }
 }
 
