@@ -256,6 +256,21 @@ void ShadertoyAudioProcessor::setShaderFile(int idx, juce::String shaderFile)
     reloadShaderFile(idx);
 }
 
+void ShadertoyAudioProcessor::setShaderFixedSizeBuffer(int idx, bool fixedSizeBuffer)
+{
+    shaderData[idx].fixedSizeBuffer = fixedSizeBuffer;
+}
+
+void ShadertoyAudioProcessor::setShaderFixedSizeWidth(int idx, int width)
+{
+    shaderData[idx].fixedSizeWidth = width;
+}
+
+void ShadertoyAudioProcessor::setShaderFixedSizeHeight(int idx, int height)
+{
+    shaderData[idx].fixedSizeHeight = height;
+}
+
 void ShadertoyAudioProcessor::reloadShaderFile(int idx)
 {
     juce::File file(shaderData[idx].path);
@@ -270,6 +285,21 @@ const juce::String &ShadertoyAudioProcessor::getShaderFile(int idx)
 const juce::String &ShadertoyAudioProcessor::getShaderString(int idx)
 {
     return shaderData[idx].source;
+}
+
+bool ShadertoyAudioProcessor::getShaderFixedSizeBuffer(int idx)
+{
+    return shaderData[idx].fixedSizeBuffer;
+}
+
+int ShadertoyAudioProcessor::getShaderFixedSizeWidth(int idx)
+{
+    return shaderData[idx].fixedSizeWidth;
+}
+
+int ShadertoyAudioProcessor::getShaderFixedSizeHeight(int idx)
+{
+    return shaderData[idx].fixedSizeHeight;
 }
 
 size_t ShadertoyAudioProcessor::getNumShaderFiles()

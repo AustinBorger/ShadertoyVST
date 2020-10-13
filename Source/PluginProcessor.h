@@ -69,9 +69,15 @@ public:
     void addShaderFileEntry();
     void removeShaderFileEntry(int idx);
     void setShaderFile(int idx, juce::String shaderFile);
+    void setShaderFixedSizeBuffer(int idx, bool fixedSizeBuffer);
+    void setShaderFixedSizeWidth(int idx, int width);
+    void setShaderFixedSizeHeight(int idx, int height);
     void reloadShaderFile(int idx);
     const juce::String &getShaderFile(int idx);
     const juce::String &getShaderString(int idx);
+    bool getShaderFixedSizeBuffer(int idx);
+    int getShaderFixedSizeWidth(int idx);
+    int getShaderFixedSizeHeight(int idX);
     size_t getNumShaderFiles();
     bool hasShaderFiles();
 
