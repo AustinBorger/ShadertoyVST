@@ -181,6 +181,7 @@ juce::AudioProcessorEditor* ShadertoyAudioProcessor::createEditor()
 void ShadertoyAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     juce::XmlElement xml("ShadertoyState");
+
     for (int i = 0; i < shaderData.size(); i++) {
         juce::XmlElement *shaderFileElement = new juce::XmlElement("ShaderFile");
         shaderFileElement->setAttribute("Path", shaderData[i].path);
@@ -194,6 +195,11 @@ void ShadertoyAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
         
         xml.addChildElement(shaderFileElement);
     }
+
+    juce::XmlElement *globalProperties = new juce::XmlElement("GlobalProperties");
+    globalProperties->setAttribute("Width", visualizationWidth);
+    globalProperties->setAttribute("Height", visualizationHeight);
+    xml.addChildElement(globalProperties);
     copyXmlToBinary(xml, destData);
 }
 
@@ -201,29 +207,34 @@ void ShadertoyAudioProcessor::setStateInformation(const void* data, int sizeInBy
 {
     shaderData.clear();
     std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
-    if (xmlState.get() != nullptr) {
-        if (xmlState->hasTagName("ShadertoyState")) {
-            juce::XmlElement* child = xmlState->getFirstChildElement();
-            while (child != nullptr) {
-                if (child->hasTagName("ShaderFile")) {
-                    const juce::String &shaderFile = child->getStringAttribute("Path");
-                    addShaderFileEntry();
-                    setShaderFile(getNumShaderFiles() - 1, shaderFile);
-                    juce::XmlElement *shaderChild = child->getFirstChildElement();
-                    while (shaderChild != nullptr) {
-                        if (shaderChild->hasTagName("FixedSizeBuffer")) {
-                            shaderData.back().fixedSizeBuffer = true;
-                            shaderData.back().fixedSizeWidth =
-                                shaderChild->getIntAttribute("Width", shaderData.back().fixedSizeWidth);
-                            shaderData.back().fixedSizeHeight =
-                                shaderChild->getIntAttribute("Height", shaderData.back().fixedSizeHeight);
-                        }
-                        shaderChild = shaderChild->getNextElement();
+    if (xmlState.get() != nullptr && xmlState->hasTagName("ShadertoyState")) {
+        juce::XmlElement* child = xmlState->getFirstChildElement();
+        while (child != nullptr) {
+            if (child->hasTagName("ShaderFile")) {
+                const juce::String &shaderFile = child->getStringAttribute("Path");
+                addShaderFileEntry();
+                setShaderFile(getNumShaderFiles() - 1, shaderFile);
+                juce::XmlElement *shaderChild = child->getFirstChildElement();
+                while (shaderChild != nullptr) {
+                    if (shaderChild->hasTagName("FixedSizeBuffer")) {
+                        shaderData.back().fixedSizeBuffer = true;
+                        shaderData.back().fixedSizeWidth =
+                            shaderChild->getIntAttribute("Width", shaderData.back().fixedSizeWidth);
+                        shaderData.back().fixedSizeHeight =
+                            shaderChild->getIntAttribute("Height", shaderData.back().fixedSizeHeight);
                     }
+                    shaderChild = shaderChild->getNextElement();
                 }
-                child = child->getNextElement();
+            } else if (child->hasTagName("GlobalProperties")) {
+                visualizationWidth = child->getIntAttribute("Width", visualizationWidth);
+                visualizationHeight = child->getIntAttribute("Height", visualizationHeight);
             }
+            child = child->getNextElement();
         }
+    }
+
+    for (auto *listener : stateListeners) {
+        listener->processorStateChanged();
     }
 }
 

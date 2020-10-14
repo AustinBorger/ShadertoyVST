@@ -28,6 +28,10 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
    fixedSizeHeightLabel(),
    shaderListBoxModel(&shaderListBox, this, processor)
 {
+    /*
+     * Shader list box (left region)
+     */
+
     addAndMakeVisible(shaderListBox);
     shaderListBox.setModel(&shaderListBoxModel);
     shaderListBox.getHeader().addColumn("ID", 0, 30, 30, -1,
@@ -47,6 +51,10 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
     reloadButton.setButtonText("Reload");
     reloadButton.addListener(this);
     
+    /*
+     * Top right region (shader properties)
+     */
+
     addAndMakeVisible(fixedSizeButton);
     fixedSizeButton.addListener(this);
     
@@ -67,10 +75,35 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
     fixedSizeHeightLabel.setText("Height:", juce::NotificationType::dontSendNotification);
     
     greyOutTopRightRegion();
+
+    /*
+     * Bottom right region (global properties)
+     */
+
+    addAndMakeVisible(visuWidthEditor);
+    visuWidthEditor.setMultiLine(false);
+    visuWidthEditor.setInputRestrictions(4, "0123456789");
+    visuWidthEditor.addListener(this);
+    visuWidthEditor.setText(std::to_string(processor.getVisualizationWidth()), false);
+
+    addAndMakeVisible(visuWidthLabel);
+    visuWidthLabel.setText("Visualization Width:", juce::NotificationType::dontSendNotification);
+
+    addAndMakeVisible(visuHeightEditor);
+    visuHeightEditor.setMultiLine(false);
+    visuHeightEditor.setInputRestrictions(4, "0123456789");
+    visuHeightEditor.addListener(this);
+    visuHeightEditor.setText(std::to_string(processor.getVisualizationHeight()), false);
+
+    addAndMakeVisible(visuHeightLabel);
+    visuHeightLabel.setText("Visualization Height:", juce::NotificationType::dontSendNotification);
+
+    processor.addStateListener(this);
 }
 
 PatchEditor::~PatchEditor()
 {
+    processor.removeStateListener(this);
 }
 
 void PatchEditor::paint(juce::Graphics& g)
@@ -92,6 +125,10 @@ void PatchEditor::paint(juce::Graphics& g)
 
 void PatchEditor::resized()
 {
+    /*
+     * Shader list
+     */
+
     juce::Rectangle<int> shaderListBounds;
     shaderListBounds.setX(0);
     shaderListBounds.setY(0);
@@ -111,6 +148,10 @@ void PatchEditor::resized()
     newShaderButton.setBounds(newShaderX, getHeight() - 30, buttonWidth, 20);
     deleteButton.setBounds(deleteX, getHeight() - 30, buttonWidth, 20);
     reloadButton.setBounds(reloadX, getHeight() - 30, buttonWidth, 20);
+
+    /*
+     * Top right region
+     */
     
     juce::Rectangle<int> topRightRegion;
     topRightRegion.setX(shaderListBounds.getWidth());
@@ -126,12 +167,27 @@ void PatchEditor::resized()
                               
     fixedSizeWidthLabel.setBounds(topRightRegion.getX() + padding, topRightRegion.getY() + padding + fixedSizeButtonHeight + space,
                                   60, 20);
-    fixedSizeWidthEditor.setBounds(topRightRegion.getX() + padding + 60, topRightRegion.getY() + 40,
+    fixedSizeWidthEditor.setBounds(topRightRegion.getX() + padding + 60, topRightRegion.getY() + padding + 20 + padding,
                                    75, 20);
     fixedSizeHeightLabel.setBounds(topRightRegion.getX() + padding, topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space,
                                    75, 20);
     fixedSizeHeightEditor.setBounds(topRightRegion.getX() + padding + 60, topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space,
                                     75, 20);
+
+    /*
+     * Bottom right region
+     */
+
+    juce::Rectangle<int> bottomRightRegion;
+    bottomRightRegion.setX(topRightRegion.getX());
+    bottomRightRegion.setY(topRightRegion.getHeight());
+    bottomRightRegion.setWidth(topRightRegion.getWidth());
+    bottomRightRegion.setHeight(getHeight() - topRightRegion.getHeight());
+
+    visuWidthLabel.setBounds(bottomRightRegion.getX() + padding, bottomRightRegion.getY() + padding, 150, 20);
+    visuWidthEditor.setBounds(bottomRightRegion.getX() + padding + 150, bottomRightRegion.getY() + 10, 75, 20);
+    visuHeightLabel.setBounds(bottomRightRegion.getX() + padding, bottomRightRegion.getY() + padding + 20 + padding, 150, 20);
+    visuHeightEditor.setBounds(bottomRightRegion.getX() + padding + 150, bottomRightRegion.getY() + padding + 20 + padding, 75, 20);
 }
 
 void PatchEditor::buttonClicked(juce::Button *button)
@@ -161,7 +217,19 @@ void PatchEditor::textEditorTextChanged(juce::TextEditor &textEditor)
     } else if (&textEditor == &fixedSizeHeightEditor) {
         int height = textEditor.getText().getIntValue();
         processor.setShaderFixedSizeHeight(shaderListBoxModel.getSelectedRow(), height);
+    } else if (&textEditor == &visuWidthEditor) {
+        int width = textEditor.getText().getIntValue();
+        processor.setVisualizationWidth(width);
+    } else if (&textEditor == &visuHeightEditor) {
+        int height = textEditor.getText().getIntValue();
+        processor.setVisualizationHeight(height);
     }
+}
+
+void PatchEditor::processorStateChanged()
+{
+    visuWidthEditor.setText(std::to_string(processor.getVisualizationWidth()), false);
+    visuHeightEditor.setText(std::to_string(processor.getVisualizationHeight()), false);
 }
 
 void PatchEditor::greyOutFixedSizeEditors()

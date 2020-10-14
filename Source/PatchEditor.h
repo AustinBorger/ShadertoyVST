@@ -20,7 +20,8 @@ class ShadertoyAudioProcessorEditor;
 */
 class PatchEditor  : public juce::Component,
                      public juce::Button::Listener,
-                     public juce::TextEditor::Listener
+                     public juce::TextEditor::Listener,
+                     public ShadertoyAudioProcessor::StateListener
 {
 public:
     PatchEditor(ShadertoyAudioProcessorEditor *editor,
@@ -31,6 +32,7 @@ public:
     void resized() override;
     void buttonClicked(juce::Button *) override;
     void textEditorTextChanged(juce::TextEditor &) override;
+    void processorStateChanged() override;
 
 private:
     class ShaderListBoxModel : public juce::TableListBoxModel
@@ -78,6 +80,11 @@ private:
     juce::Label fixedSizeWidthLabel;
     juce::TextEditor fixedSizeHeightEditor;
     juce::Label fixedSizeHeightLabel;
+
+    juce::TextEditor visuWidthEditor;
+    juce::Label visuWidthLabel;
+    juce::TextEditor visuHeightEditor;
+    juce::Label visuHeightLabel;
     
     ShaderListBoxModel shaderListBoxModel;
     ShadertoyAudioProcessorEditor *editor;

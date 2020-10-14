@@ -16,13 +16,10 @@
 class ShadertoyAudioProcessor  : public juce::AudioProcessor
 {
 public:
-    struct ShaderData
+    class StateListener
     {
-        juce::String path;
-        juce::String source;
-        bool fixedSizeBuffer = false;
-        int fixedSizeWidth = 640;
-        int fixedSizeHeight = 360;
+    public:
+        virtual void processorStateChanged() = 0;
     };
 
     //==============================================================================
@@ -59,12 +56,21 @@ public:
     void changeProgramName (int index, const juce::String& newName) override;
 
     //==============================================================================
-    void getStateInformation (juce::MemoryBlock& destData) override;
-    void setStateInformation (const void* data, int sizeInBytes) override;
+    void getStateInformation(juce::MemoryBlock& destData) override;
+    void setStateInformation(const void* data, int sizeInBytes) override;
     
     float getUniformFloat(int i);
     int getUniformInt(int i);
     int getProgramIdx();
+
+    int getVisualizationWidth()
+      { return visualizationWidth; }
+    void setVisualizationWidth(int visualizationWidth)
+      { this->visualizationWidth = visualizationWidth; }
+    int getVisualizationHeight()
+      { return visualizationHeight; }
+    void setVisualizationHeight(int visualizationHeight)
+      { this->visualizationHeight = visualizationHeight; }
     
     void addShaderFileEntry();
     void removeShaderFileEntry(int idx);
@@ -81,14 +87,39 @@ public:
     size_t getNumShaderFiles();
     bool hasShaderFiles();
 
+    void addStateListener(StateListener *listener)
+    {
+      stateListeners.emplace_back(listener);
+    }
+
+    void removeStateListener(StateListener *listener)
+    {
+      auto it = std::find(stateListeners.begin(), stateListeners.end(), listener);
+      if (it != stateListeners.end()) {
+        stateListeners.erase(it);
+      }
+    }
+
 private:
+    struct ShaderData
+    {
+        juce::String path;
+        juce::String source;
+        bool fixedSizeBuffer = false;
+        int fixedSizeWidth = 640;
+        int fixedSizeHeight = 360;
+    };
+
     void addUniformFloat(const juce::String &name);
     void addUniformInt(const juce::String &name);
 
+    std::vector<StateListener *> stateListeners;
     std::vector<std::unique_ptr<juce::AudioParameterFloat>> floatParams;
     std::vector<std::unique_ptr<juce::AudioParameterInt>> intParams;
     std::unique_ptr<juce::AudioParameterInt> programParam;
     std::vector<ShaderData> shaderData;
+    int visualizationWidth = 1280;
+    int visualizationHeight = 720;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ShadertoyAudioProcessor)
