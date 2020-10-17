@@ -14,8 +14,8 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
  : AudioProcessorEditor(&p), 
    processor(p),
    glRenderer(p, glContext),
-   patchEditor(this, p),
-   tabs(this, juce::TabbedButtonBar::TabsAtTop)
+   patchEditor(*this, p),
+   tabs(*this, juce::TabbedButtonBar::TabsAtTop)
 {
     juce::Colour bgColor = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
 
@@ -59,7 +59,7 @@ void ShadertoyAudioProcessorEditor::currentTabChanged(int newCurrentTabIndex)
   }
 }
 
-ShadertoyAudioProcessorEditor::Tabs::Tabs(ShadertoyAudioProcessorEditor *editor,
+ShadertoyAudioProcessorEditor::Tabs::Tabs(ShadertoyAudioProcessorEditor &editor,
                                           juce::TabbedButtonBar::Orientation orientation)
  : editor(editor),
    juce::TabbedComponent(orientation)
@@ -67,5 +67,5 @@ ShadertoyAudioProcessorEditor::Tabs::Tabs(ShadertoyAudioProcessorEditor *editor,
 
 void ShadertoyAudioProcessorEditor::Tabs::currentTabChanged(int newCurrentTabIndex, const juce::String &newCurrentTabName)
 {
-  editor->currentTabChanged(newCurrentTabIndex);
+  editor.currentTabChanged(newCurrentTabIndex);
 }

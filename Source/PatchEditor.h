@@ -24,7 +24,7 @@ class PatchEditor  : public juce::Component,
                      public ShadertoyAudioProcessor::StateListener
 {
 public:
-    PatchEditor(ShadertoyAudioProcessorEditor *editor,
+    PatchEditor(ShadertoyAudioProcessorEditor &editor,
                 ShadertoyAudioProcessor &processor);
     ~PatchEditor() override;
 
@@ -39,7 +39,7 @@ private:
     {
     public:
         ShaderListBoxModel(juce::TableListBox *box,
-                           PatchEditor *parent,
+                           PatchEditor &parent,
                            ShadertoyAudioProcessor &processor);
         virtual ~ShaderListBoxModel() { }
 
@@ -60,7 +60,7 @@ private:
         juce::Font font { 14.0f };
         juce::TableListBox *box;
 
-        PatchEditor *parent;
+        PatchEditor &parent;
         ShadertoyAudioProcessor &processor;
         int selectedRow;
     };
@@ -87,7 +87,7 @@ private:
     juce::Label visuHeightLabel;
     
     ShaderListBoxModel shaderListBoxModel;
-    ShadertoyAudioProcessorEditor *editor;
+    ShadertoyAudioProcessorEditor &editor;
     ShadertoyAudioProcessor &processor;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PatchEditor)

@@ -30,14 +30,14 @@ private:
     class Tabs : public juce::TabbedComponent
     {
     public:
-      Tabs(ShadertoyAudioProcessorEditor *editor,
+      Tabs(ShadertoyAudioProcessorEditor &editor,
            juce::TabbedButtonBar::Orientation orientation);
       virtual ~Tabs() { }
 
       void currentTabChanged(int newCurrentTabIndex, const juce::String &newCurrentTabName) override;
 
     private:
-      ShadertoyAudioProcessorEditor *editor;
+      ShadertoyAudioProcessorEditor &editor;
     };
 
     void currentTabChanged(int newCurrentTabeIndex);

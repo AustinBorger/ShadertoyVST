@@ -13,7 +13,7 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
+PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor,
                          ShadertoyAudioProcessor& processor)
  : editor(editor),
    processor(processor),
@@ -26,7 +26,7 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor *editor,
    fixedSizeWidthLabel(),
    fixedSizeHeightEditor(),
    fixedSizeHeightLabel(),
-   shaderListBoxModel(&shaderListBox, this, processor)
+   shaderListBoxModel(&shaderListBox, *this, processor)
 {
     /*
      * Shader list box (left region)
@@ -313,7 +313,7 @@ void PatchEditor::loadTopRightRegion(int shaderIdx)
 }
 
 PatchEditor::ShaderListBoxModel::ShaderListBoxModel(juce::TableListBox *box,
-                                                    PatchEditor *parent,
+                                                    PatchEditor &parent,
                                                     ShadertoyAudioProcessor &processor)
  : box(box),
    parent(parent),
@@ -371,7 +371,7 @@ void PatchEditor::ShaderListBoxModel::paintCell(
 void PatchEditor::ShaderListBoxModel::selectedRowsChanged(int lastRowSelected)
 {
     selectedRow = lastRowSelected;
-    parent->loadTopRightRegion(selectedRow);
+    parent.loadTopRightRegion(selectedRow);
 }
 
 void PatchEditor::ShaderListBoxModel::cellDoubleClicked(
