@@ -26,12 +26,27 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-private:    
-    ShadertoyAudioProcessor& audioProcessor;
+private:
+    class Tabs : public juce::TabbedComponent
+    {
+    public:
+      Tabs(ShadertoyAudioProcessorEditor *editor,
+           juce::TabbedButtonBar::Orientation orientation);
+      virtual ~Tabs() { }
+
+      void currentTabChanged(int newCurrentTabIndex, const juce::String &newCurrentTabName) override;
+
+    private:
+      ShadertoyAudioProcessorEditor *editor;
+    };
+
+    void currentTabChanged(int newCurrentTabeIndex);
+
+    ShadertoyAudioProcessor& processor;
     juce::OpenGLContext glContext;
     GLRenderer glRenderer;
     PatchEditor patchEditor;
-    juce::TabbedComponent tabs;
+    Tabs tabs;
 
     static constexpr uint16_t UI_WIDTH = 1280;
     static constexpr uint16_t UI_HEIGHT = 720;
