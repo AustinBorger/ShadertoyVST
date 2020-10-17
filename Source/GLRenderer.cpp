@@ -45,11 +45,6 @@ GLRenderer::GLRenderer(ShadertoyAudioProcessor& processor,
    glContext(glContext),
    programs(),
    copyProgram(glContext),
-   validState(true),
-   mFramebuffer(0),
-   mRenderTexture(0),
-   mFramebufferWidth(640),
-   mFramebufferHeight(360),
    uniformFloats(),
    uniformInts()
 {

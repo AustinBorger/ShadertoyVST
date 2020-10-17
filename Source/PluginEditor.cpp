@@ -68,4 +68,7 @@ ShadertoyAudioProcessorEditor::Tabs::Tabs(ShadertoyAudioProcessorEditor &editor,
 void ShadertoyAudioProcessorEditor::Tabs::currentTabChanged(int newCurrentTabIndex, const juce::String &newCurrentTabName)
 {
   editor.currentTabChanged(newCurrentTabIndex);
+
+  // Unreferenced Parameters
+  (void)(newCurrentTabName);
 }

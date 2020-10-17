@@ -65,12 +65,12 @@ public:
 
     int getVisualizationWidth()
       { return visualizationWidth; }
-    void setVisualizationWidth(int visualizationWidth)
-      { this->visualizationWidth = visualizationWidth; }
+    void setVisualizationWidth(int width)
+      { visualizationWidth = width; }
     int getVisualizationHeight()
       { return visualizationHeight; }
-    void setVisualizationHeight(int visualizationHeight)
-      { this->visualizationHeight = visualizationHeight; }
+    void setVisualizationHeight(int height)
+      { visualizationHeight = height; }
     
     void addShaderFileEntry();
     void removeShaderFileEntry(int idx);

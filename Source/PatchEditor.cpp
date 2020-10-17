@@ -323,7 +323,7 @@ PatchEditor::ShaderListBoxModel::ShaderListBoxModel(juce::TableListBox *box,
 
 int PatchEditor::ShaderListBoxModel::getNumRows()
 {
-    return processor.getNumShaderFiles();
+    return (int)processor.getNumShaderFiles();
 }
 
 void PatchEditor::ShaderListBoxModel::paintRowBackground(
@@ -340,6 +340,10 @@ void PatchEditor::ShaderListBoxModel::paintRowBackground(
     } else if (rowNumber % 2) {
         g.fillAll(alternateColour);
     }
+
+    // Unreferenced parameters
+    (void)(width);
+    (void)(height);
 }
 
 void PatchEditor::ShaderListBoxModel::paintCell(
@@ -384,6 +388,9 @@ void PatchEditor::ShaderListBoxModel::cellDoubleClicked(
         processor.setShaderFile(rowNumber, fileChooser.getResult().getFullPathName());
         box->updateContent();
     }
+
+    // Unreferenced parametrs
+    (void)(columnId);
 }
 
 void PatchEditor::ShaderListBoxModel::newRow()
@@ -391,7 +398,7 @@ void PatchEditor::ShaderListBoxModel::newRow()
     juce::FileChooser fileChooser("Choose Shader File", juce::File::getSpecialLocation(juce::File::userHomeDirectory), "*.glsl");
     if (fileChooser.browseForFileToOpen()) {
         processor.addShaderFileEntry();
-        processor.setShaderFile(processor.getNumShaderFiles() - 1, fileChooser.getResult().getFullPathName());
+        processor.setShaderFile((int)processor.getNumShaderFiles() - 1, fileChooser.getResult().getFullPathName());
         box->updateContent();
     }
 }

@@ -44,11 +44,11 @@ private:
     juce::OpenGLContext &glContext;
     std::vector<std::unique_ptr<juce::OpenGLShaderProgram>> programs;
     juce::OpenGLShaderProgram copyProgram;
-    bool validState;
-    GLuint mFramebuffer;
-    GLuint mRenderTexture;
-    int mFramebufferWidth;
-    int mFramebufferHeight;
+    bool validState = true;
+    GLuint mFramebuffer = 0;
+    GLuint mRenderTexture = 0;
+    int mFramebufferWidth = 640;
+    int mFramebufferHeight = 360;
     std::vector<std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>>> uniformFloats;
     std::vector<std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>>> uniformInts;
     std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> resolutionIntrinsics;
