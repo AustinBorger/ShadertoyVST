@@ -27,21 +27,15 @@ public:
     void resized() override;
 
 private:    
-    static int getAppropriateHeight(int width);
-
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
     ShadertoyAudioProcessor& audioProcessor;
     juce::OpenGLContext glContext;
     GLRenderer glRenderer;
     PatchEditor patchEditor;
     juce::TabbedComponent tabs;
 
+    static constexpr uint16_t UI_WIDTH = 1280;
+    static constexpr uint16_t UI_HEIGHT = 720;
     static constexpr uint16_t TAB_HEIGHT = 30;
-    static constexpr uint16_t MIN_WIDTH = GLRenderer::VISU_WIDTH;
-    static constexpr uint16_t MIN_HEIGHT = GLRenderer::VISU_HEIGHT + TAB_HEIGHT;
-    static constexpr uint16_t MAX_WIDTH = GLRenderer::VISU_WIDTH * 8;
-    static constexpr uint16_t MAX_HEIGHT = GLRenderer::VISU_HEIGHT * 8 + TAB_HEIGHT;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ShadertoyAudioProcessorEditor)
 };

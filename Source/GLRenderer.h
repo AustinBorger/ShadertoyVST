@@ -30,9 +30,6 @@ public:
     void newOpenGLContextCreated() override;
     void openGLContextClosing() override;
     void renderOpenGL() override;
-    
-    static constexpr uint16_t VISU_WIDTH = 640;
-    static constexpr uint16_t VISU_HEIGHT = 360;
 
 private:
     bool loadExtensions();

@@ -18,11 +18,9 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
    patchEditor(this, p),
    tabs(juce::TabbedButtonBar::TabsAtTop)
 {
-    int width = GLRenderer::VISU_WIDTH * 2;
-    int height = getAppropriateHeight(width);
     juce::Colour bgColor = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
 
-    setSize(width, height);
+    setSize(UI_WIDTH, UI_HEIGHT + TAB_HEIGHT);
     setResizable(false, false);
 
     addAndMakeVisible(tabs);
@@ -51,11 +49,4 @@ void ShadertoyAudioProcessorEditor::resized()
     tabs.setBounds(getBounds());
     glRenderer.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
     patchEditor.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
-}
-
-int ShadertoyAudioProcessorEditor::getAppropriateHeight(int width)
-{
-    static constexpr double VISU_ASPECT_RATIO =
-        (double)GLRenderer::VISU_WIDTH / (double)GLRenderer::VISU_HEIGHT;
-    return (int)((double)width / VISU_ASPECT_RATIO + TAB_HEIGHT);
 }
