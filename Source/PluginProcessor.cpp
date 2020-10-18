@@ -166,7 +166,9 @@ void ShadertoyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juc
     }
 
     for (auto midiMessage : midiMessages) {
-        keyboardState.processNextMidiEvent(midiMessage.getMessage());
+        for (auto listener : midiListeners) {
+            listener->handleMidiMessage(midiMessage.getMessage());
+        }
     }
 }
 

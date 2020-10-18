@@ -18,7 +18,8 @@
 /*
 */
 class GLRenderer  : public juce::Component,
-                    public juce::OpenGLRenderer
+                    public juce::OpenGLRenderer,
+                    public ShadertoyAudioProcessor::MidiListener
 {
 public:
     GLRenderer(ShadertoyAudioProcessor& audioProcessor,
@@ -31,6 +32,8 @@ public:
     void newOpenGLContextCreated() override;
     void openGLContextClosing() override;
     void renderOpenGL() override;
+  
+    void handleMidiMessage(const juce::MidiMessage &message) override;
 
 private:
     struct ProgramData {
@@ -39,6 +42,7 @@ private:
         std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformInts;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyDownIntrinsic;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyUpIntrinsic;
     };
 
     bool loadExtensions();
@@ -52,6 +56,7 @@ private:
     ShadertoyAudioProcessor& processor;
     juce::OpenGLContext &glContext;
     juce::OpenGLShaderProgram copyProgram;
+    juce::MidiMessageCollector midiCollector;
   
     std::vector<ProgramData> programData;
 
@@ -63,6 +68,10 @@ private:
     GLuint mRenderTexture = 0;
     int mFramebufferWidth = 640;
     int mFramebufferHeight = 360;
+    double firstRender = 0.0f;
+    int samplePos = 0;
+    double keyDownLast[128] = { };
+    double keyUpLast[128] = { };
     
     PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;
     PFNGLDRAWBUFFERSPROC glDrawBuffers;

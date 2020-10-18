@@ -22,6 +22,12 @@ public:
         virtual void processorStateChanged() = 0;
     };
 
+    class MidiListener
+    {
+    public:
+        virtual void handleMidiMessage(const juce::MidiMessage &message) = 0;
+    };
+
     //==============================================================================
     ShadertoyAudioProcessor();
     ~ShadertoyAudioProcessor() override;
@@ -100,9 +106,17 @@ public:
       }
     }
 
-    bool isNoteOn(int note)
+    void addMidiListener(MidiListener *listener)
     {
-      return keyboardState.isNoteOn(1, note);
+      midiListeners.emplace_back(listener);
+    }
+
+    void removeMidiListener(MidiListener *listener)
+    {
+      auto it = std::find(midiListeners.begin(), midiListeners.end(), listener);
+      if (it != midiListeners.end()) {
+        midiListeners.erase(it);
+      }
     }
 
 private:
@@ -118,9 +132,9 @@ private:
     void addUniformFloat(const juce::String &name);
     void addUniformInt(const juce::String &name);
 
-    juce::MidiKeyboardState keyboardState;
-
     std::vector<StateListener *> stateListeners;
+    std::vector<MidiListener *> midiListeners;
+
     std::vector<std::unique_ptr<juce::AudioParameterFloat>> floatParams;
     std::vector<std::unique_ptr<juce::AudioParameterInt>> intParams;
     std::unique_ptr<juce::AudioParameterInt> programParam;

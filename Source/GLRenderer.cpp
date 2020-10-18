@@ -78,6 +78,12 @@ void GLRenderer::newOpenGLContextCreated()
     if (!createFramebuffer()) {
         goto failure;
     }
+
+    processor.addMidiListener(this);
+    midiCollector.reset(44100.f);
+    firstRender = 0.0;
+    memset(keyDownLast, 0, sizeof(keyDownLast));
+    memset(keyUpLast, 0, sizeof(keyUpLast));
     
     validState = true;
     return;
@@ -88,6 +94,8 @@ failure:
 
 void GLRenderer::openGLContextClosing()
 {
+    processor.removeMidiListener(this);
+
     copyProgram.release();
 
     for (auto &item : programData) {
@@ -106,6 +114,30 @@ void GLRenderer::renderOpenGL()
         int programIdx = processor.getProgramIdx();
         int backBufferWidth = (int)(getWidth() * scaleFactor);
         int backBufferHeight = (int)(getHeight() * scaleFactor);
+
+        double now = juce::Time::getMillisecondCounterHiRes();
+        if (firstRender > 0.0) {
+            juce::MidiBuffer midiBuffer;
+            double elapsedMs = now - firstRender;
+            int newSamplePos = int((elapsedMs / 1000.0) * 44100.0);
+            int numSamples = newSamplePos - samplePos;
+
+            midiCollector.removeNextBlockOfMessages(midiBuffer, numSamples);
+            for (auto metadata : midiBuffer) {
+                const juce::MidiMessage &message = metadata.getMessage();
+                double timestamp = message.getTimeStamp();
+                if (message.isNoteOn()) {
+                    keyDownLast[message.getNoteNumber()] = (double(samplePos) + timestamp) / 44100.0;
+                } else if (message.isNoteOff()) {
+                    keyUpLast[message.getNoteNumber()] = (double(samplePos) + timestamp) / 44100.0;
+                }
+            }
+
+            samplePos = newSamplePos;
+        } else {
+            firstRender = now;
+            samplePos = 0;
+        }
         
         if (programIdx < programData.size()) {
             ProgramData &program = programData[programIdx];
@@ -124,11 +156,17 @@ void GLRenderer::renderOpenGL()
             if (program.keyDownIntrinsic != nullptr) {
                 GLfloat vals[128] = { };
                 for (int i = 0; i < 128; i++) {
-                    if (processor.isNoteOn(i)) {
-                        vals[i] = 1.0f;
-                    }
+                    vals[i] = (GLfloat)keyDownLast[i];
                 }
                 program.keyDownIntrinsic->set(vals, 128);
+            }
+
+            if (program.keyUpIntrinsic != nullptr) {
+                GLfloat vals[128] = { };
+                for (int i = 0; i < 128; i++) {
+                    vals[i] = (GLfloat)keyUpLast[i];
+                }
+                program.keyUpIntrinsic->set(vals, 128);
             }
             
             if (processor.getShaderFixedSizeBuffer(programIdx)) {
@@ -184,6 +222,11 @@ void GLRenderer::renderOpenGL()
     }
 }
 
+void GLRenderer::handleMidiMessage(const juce::MidiMessage &message)
+{
+    midiCollector.addMessageToQueue(message);
+}
+
 void GLRenderer::resized()
 {
     // This method is where you should set the bounds of any child
@@ -225,6 +268,7 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
     
     static const char *RESOLUTION_INTRINSIC_NAME = "iResolution";
     static const char *KEY_DOWN_INTRINSIC_NAME = "iKeyDown[0]";
+    static const char *KEY_UP_INTRINSIC_NAME = "iKeyUp[0]";
 
     if (name == RESOLUTION_INTRINSIC_NAME) {
         if (type != GL_FLOAT_VEC2 || size != 1) {
@@ -243,6 +287,16 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
 
         program.keyDownIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
             (new juce::OpenGLShaderProgram::Uniform(*program.program, KEY_DOWN_INTRINSIC_NAME)));
+
+        isIntrinsic = true;
+        return true;
+    } else if (name == KEY_UP_INTRINSIC_NAME) {
+        if (type != GL_FLOAT || size != 128) {
+            goto failure;
+        }
+
+        program.keyUpIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+            (new juce::OpenGLShaderProgram::Uniform(*program.program, KEY_UP_INTRINSIC_NAME)));
 
         isIntrinsic = true;
         return true;
