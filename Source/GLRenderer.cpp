@@ -154,19 +154,19 @@ void GLRenderer::renderOpenGL()
             }
 
             if (program.keyDownIntrinsic != nullptr) {
-                GLfloat vals[128] = { };
-                for (int i = 0; i < 128; i++) {
+                GLfloat vals[MIDI_NUM_KEYS] = { };
+                for (int i = 0; i < MIDI_NUM_KEYS; i++) {
                     vals[i] = (GLfloat)keyDownLast[i];
                 }
-                program.keyDownIntrinsic->set(vals, 128);
+                program.keyDownIntrinsic->set(vals, MIDI_NUM_KEYS);
             }
 
             if (program.keyUpIntrinsic != nullptr) {
-                GLfloat vals[128] = { };
-                for (int i = 0; i < 128; i++) {
+                GLfloat vals[MIDI_NUM_KEYS] = { };
+                for (int i = 0; i < MIDI_NUM_KEYS; i++) {
                     vals[i] = (GLfloat)keyUpLast[i];
                 }
-                program.keyUpIntrinsic->set(vals, 128);
+                program.keyUpIntrinsic->set(vals, MIDI_NUM_KEYS);
             }
             
             if (processor.getShaderFixedSizeBuffer(programIdx)) {
@@ -281,7 +281,7 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
         isIntrinsic = true;
         return true;
     } else if (name == KEY_DOWN_INTRINSIC_NAME) {
-        if (type != GL_FLOAT || size != 128) {
+        if (type != GL_FLOAT || size != MIDI_NUM_KEYS) {
             goto failure;
         }
 
@@ -291,7 +291,7 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
         isIntrinsic = true;
         return true;
     } else if (name == KEY_UP_INTRINSIC_NAME) {
-        if (type != GL_FLOAT || size != 128) {
+        if (type != GL_FLOAT || size != MIDI_NUM_KEYS) {
             goto failure;
         }
 

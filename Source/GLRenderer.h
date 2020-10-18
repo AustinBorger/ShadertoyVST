@@ -53,6 +53,8 @@ private:
                                GLint size, bool &isIntrinsic, int programIdx);
     void alertError(const juce::String &title, const juce::String &message);
 
+    static constexpr int MIDI_NUM_KEYS = 128;
+
     ShadertoyAudioProcessor& processor;
     juce::OpenGLContext &glContext;
     juce::OpenGLShaderProgram copyProgram;
@@ -70,8 +72,8 @@ private:
     int mFramebufferHeight = 360;
     double firstRender = 0.0f;
     int samplePos = 0;
-    double keyDownLast[128] = { };
-    double keyUpLast[128] = { };
+    double keyDownLast[MIDI_NUM_KEYS] = { };
+    double keyUpLast[MIDI_NUM_KEYS] = { };
     
     PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;
     PFNGLDRAWBUFFERSPROC glDrawBuffers;
