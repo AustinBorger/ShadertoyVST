@@ -100,6 +100,11 @@ public:
       }
     }
 
+    bool isNoteOn(int note)
+    {
+      return keyboardState.isNoteOn(1, note);
+    }
+
 private:
     struct ShaderData
     {
@@ -112,6 +117,8 @@ private:
 
     void addUniformFloat(const juce::String &name);
     void addUniformInt(const juce::String &name);
+
+    juce::MidiKeyboardState keyboardState;
 
     std::vector<StateListener *> stateListeners;
     std::vector<std::unique_ptr<juce::AudioParameterFloat>> floatParams;

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="nZeZxi" name="Shadertoy" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              pluginCharacteristicsValue="pluginWantsMidiIn">
   <MAINGROUP id="ORjiio" name="Shadertoy">
     <GROUP id="{A5F74135-4694-6E41-63D6-597CE7DA0232}" name="Source">
       <FILE id="w4MGry" name="khrplatform.h" compile="0" resource="0" file="Source/khrplatform.h"/>

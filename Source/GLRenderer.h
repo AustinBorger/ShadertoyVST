@@ -17,7 +17,8 @@
 //==============================================================================
 /*
 */
-class GLRenderer  : public juce::Component, public juce::OpenGLRenderer
+class GLRenderer  : public juce::Component,
+                    public juce::OpenGLRenderer
 {
 public:
     GLRenderer(ShadertoyAudioProcessor& audioProcessor,
@@ -32,6 +33,14 @@ public:
     void renderOpenGL() override;
 
 private:
+    struct ProgramData {
+        std::unique_ptr<juce::OpenGLShaderProgram> program;
+        std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformFloats;
+        std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformInts;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyDownIntrinsic;
+    };
+
     bool loadExtensions();
     bool buildShaderProgram(int idx);
     bool buildCopyProgram();
@@ -42,19 +51,18 @@ private:
 
     ShadertoyAudioProcessor& processor;
     juce::OpenGLContext &glContext;
-    std::vector<std::unique_ptr<juce::OpenGLShaderProgram>> programs;
     juce::OpenGLShaderProgram copyProgram;
+  
+    std::vector<ProgramData> programData;
+
+    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> widthRatio;
+    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> heightRatio;
+
     bool validState = true;
     GLuint mFramebuffer = 0;
     GLuint mRenderTexture = 0;
     int mFramebufferWidth = 640;
     int mFramebufferHeight = 360;
-    std::vector<std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>>> uniformFloats;
-    std::vector<std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>>> uniformInts;
-    std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> resolutionIntrinsics;
-    std::vector<int> refreshList;
-    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> widthRatio;
-    std::unique_ptr<juce::OpenGLShaderProgram::Uniform> heightRatio;
     
     PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;
     PFNGLDRAWBUFFERSPROC glDrawBuffers;

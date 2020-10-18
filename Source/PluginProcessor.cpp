@@ -87,21 +87,21 @@ int ShadertoyAudioProcessor::getCurrentProgram()
     return 0;
 }
 
-void ShadertoyAudioProcessor::setCurrentProgram (int index)
+void ShadertoyAudioProcessor::setCurrentProgram(int index)
 {
 }
 
-const juce::String ShadertoyAudioProcessor::getProgramName (int index)
+const juce::String ShadertoyAudioProcessor::getProgramName(int index)
 {
     return {};
 }
 
-void ShadertoyAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void ShadertoyAudioProcessor::changeProgramName(int index, const juce::String& newName)
 {
 }
 
 //==============================================================================
-void ShadertoyAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void ShadertoyAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
@@ -114,7 +114,7 @@ void ShadertoyAudioProcessor::releaseResources()
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool ShadertoyAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool ShadertoyAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
   #if JucePlugin_IsMidiEffect
     juce::ignoreUnused (layouts);
@@ -137,7 +137,7 @@ bool ShadertoyAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 }
 #endif
 
-void ShadertoyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void ShadertoyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
@@ -163,6 +163,10 @@ void ShadertoyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         auto* channelData = buffer.getWritePointer (channel);
 
         // ..do something to the data...
+    }
+
+    for (auto midiMessage : midiMessages) {
+        keyboardState.processNextMidiEvent(midiMessage.getMessage());
     }
 }
 

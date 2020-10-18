@@ -43,10 +43,7 @@ GLRenderer::GLRenderer(ShadertoyAudioProcessor& processor,
                        juce::OpenGLContext &glContext)
  : processor(processor),
    glContext(glContext),
-   programs(),
-   copyProgram(glContext),
-   uniformFloats(),
-   uniformInts()
+   copyProgram(glContext)
 {
     setOpaque(true);
 	glContext.setRenderer(this);
@@ -71,10 +68,8 @@ void GLRenderer::newOpenGLContextCreated()
     
     for (int i = 0; i < processor.getNumShaderFiles(); i++) {
         std::unique_ptr<juce::OpenGLShaderProgram> program(new juce::OpenGLShaderProgram(glContext));
-        programs.emplace_back(std::move(program));
-        resolutionIntrinsics.emplace_back();
-        uniformFloats.emplace_back();
-        uniformInts.emplace_back();
+        programData.emplace_back();
+        programData.back().program = std::move(program);
         if (!buildShaderProgram(i)) {
             goto failure;
         }
@@ -93,15 +88,12 @@ failure:
 
 void GLRenderer::openGLContextClosing()
 {
-    resolutionIntrinsics.clear();
-    uniformFloats.clear();
-    uniformInts.clear();
     copyProgram.release();
 
-    for (std::unique_ptr<juce::OpenGLShaderProgram> &program : programs) {
-        program->release();
+    for (auto &item : programData) {
+        item.program->release();
     }
-    programs.clear();
+    programData.clear();
 }
 
 void GLRenderer::renderOpenGL()
@@ -115,26 +107,37 @@ void GLRenderer::renderOpenGL()
         int backBufferWidth = (int)(getWidth() * scaleFactor);
         int backBufferHeight = (int)(getHeight() * scaleFactor);
         
-        if (programIdx < programs.size()) {
-            programs[programIdx]->use();
+        if (programIdx < programData.size()) {
+            ProgramData &program = programData[programIdx];
+            program.program->use();
         
-            for (int i = 0; i < uniformFloats[programIdx].size(); i++) {
+            for (int i = 0; i < program.uniformFloats.size(); i++) {
                 float val = processor.getUniformFloat(i);
-                uniformFloats[programIdx][i]->set(val);
+                program.uniformFloats[i]->set(val);
             }
         
-            for (int i = 0; i < uniformInts[programIdx].size(); i++) {
+            for (int i = 0; i < program.uniformInts.size(); i++) {
                 int val = processor.getUniformInt(i);
-                uniformInts[programIdx][i]->set(val);
+                program.uniformInts[i]->set(val);
+            }
+
+            if (program.keyDownIntrinsic != nullptr) {
+                GLfloat vals[128] = { };
+                for (int i = 0; i < 128; i++) {
+                    if (processor.isNoteOn(i)) {
+                        vals[i] = 1.0f;
+                    }
+                }
+                program.keyDownIntrinsic->set(vals, 128);
             }
             
             if (processor.getShaderFixedSizeBuffer(programIdx)) {
                 int framebufferWidth = processor.getShaderFixedSizeWidth(programIdx);
                 int framebufferHeight = processor.getShaderFixedSizeHeight(programIdx);
 
-                if (resolutionIntrinsics[programIdx] != nullptr) {
-                    resolutionIntrinsics[programIdx]->set((GLfloat)framebufferWidth,
-                                                          (GLfloat)framebufferHeight);
+                if (program.resolutionIntrinsic != nullptr) {
+                    program.resolutionIntrinsic->set((GLfloat)framebufferWidth,
+                                                     (GLfloat)framebufferHeight);
                 }
 
                 /*
@@ -157,9 +160,9 @@ void GLRenderer::renderOpenGL()
                 glViewport(0, 0, backBufferWidth, backBufferHeight);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
             } else {
-                if (resolutionIntrinsics[programIdx] != nullptr) {
-                    resolutionIntrinsics[programIdx]->set((GLfloat)backBufferWidth,
-                                                          (GLfloat)backBufferHeight);
+                if (program.resolutionIntrinsic != nullptr) {
+                    program.resolutionIntrinsic->set((GLfloat)backBufferWidth,
+                                                     (GLfloat)backBufferHeight);
                 }
 
                 /*
@@ -217,18 +220,30 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
                                        bool &isIntrinsic,
                                        int programIdx)
 {
+    ProgramData &program = programData[programIdx];
     isIntrinsic = false;
     
     static const char *RESOLUTION_INTRINSIC_NAME = "iResolution";
+    static const char *KEY_DOWN_INTRINSIC_NAME = "iKeyDown[0]";
 
     if (name == RESOLUTION_INTRINSIC_NAME) {
         if (type != GL_FLOAT_VEC2 || size != 1) {
             goto failure;
         }
         
-        resolutionIntrinsics[programIdx] = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-            (new juce::OpenGLShaderProgram::Uniform(*programs[programIdx], RESOLUTION_INTRINSIC_NAME)));
+        program.resolutionIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+            (new juce::OpenGLShaderProgram::Uniform(*program.program, RESOLUTION_INTRINSIC_NAME)));
         
+        isIntrinsic = true;
+        return true;
+    } else if (name == KEY_DOWN_INTRINSIC_NAME) {
+        if (type != GL_FLOAT || size != 128) {
+            goto failure;
+        }
+
+        program.keyDownIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+            (new juce::OpenGLShaderProgram::Uniform(*program.program, KEY_DOWN_INTRINSIC_NAME)));
+
         isIntrinsic = true;
         return true;
     }
@@ -243,22 +258,24 @@ failure:
 
 bool GLRenderer::buildShaderProgram(int idx)
 {
-    if (!programs[idx]->addVertexShader(vert) ||
-	    !programs[idx]->addFragmentShader(processor.getShaderString(idx)) ||
-	    !programs[idx]->link()) {
-	    alertError("Error building program", programs[idx]->getLastError());
+    ProgramData &program = programData[idx];
+
+    if (!program.program->addVertexShader(vert) ||
+	    !program.program->addFragmentShader(processor.getShaderString(idx)) ||
+	    !program.program->link()) {
+	    alertError("Error building program", program.program->getLastError());
 	    return false;
 	}
 	
 	GLint count;
-	glContext.extensions.glGetProgramiv(programs[idx]->getProgramID(), GL_ACTIVE_UNIFORMS, &count);
+	glContext.extensions.glGetProgramiv(program.program->getProgramID(), GL_ACTIVE_UNIFORMS, &count);
 	
 	GLchar name[256];
 	GLsizei length;
 	GLint size;
 	GLenum type;
 	for (GLint i = 0; i < count; i++) {
-	    glGetActiveUniform(programs[idx]->getProgramID(), (GLuint)i, ARRAYSIZE(name),
+	    glGetActiveUniform(program.program->getProgramID(), (GLuint)i, ARRAYSIZE(name),
 	                       &length, &size, &type, name);
 	    name[length] = '\0';
 
@@ -278,11 +295,11 @@ bool GLRenderer::buildShaderProgram(int idx)
 	        }
 	        
 	        if (type == GL_FLOAT) {
-	            uniformFloats[idx].emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-	                (new juce::OpenGLShaderProgram::Uniform(*programs[idx], name))));
+	            program.uniformFloats.emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+	                (new juce::OpenGLShaderProgram::Uniform(*program.program, name))));
 	        } else if (type == GL_INT) {
-	            uniformInts[idx].emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-	                (new juce::OpenGLShaderProgram::Uniform(*programs[idx], name))));
+	            program.uniformInts.emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+	                (new juce::OpenGLShaderProgram::Uniform(*program.program, name))));
 	        } else {
 	            juce::String message = "Parameter uniform \"";
 	            message += name;
