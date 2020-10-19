@@ -165,10 +165,8 @@ void ShadertoyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juc
         // ..do something to the data...
     }
 
-    for (auto midiMessage : midiMessages) {
-        for (auto listener : midiListeners) {
-            listener->handleMidiMessage(midiMessage.getMessage());
-        }
+    for (auto listener : midiListeners) {
+        listener->handleMidiMessages(midiMessages);
     }
 }
 

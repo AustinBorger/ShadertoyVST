@@ -25,7 +25,7 @@ public:
     class MidiListener
     {
     public:
-        virtual void handleMidiMessage(const juce::MidiMessage &message) = 0;
+        virtual void handleMidiMessages(juce::MidiBuffer &midiBuffer) = 0;
     };
 
     //==============================================================================

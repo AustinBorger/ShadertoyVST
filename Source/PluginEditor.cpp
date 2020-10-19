@@ -13,7 +13,7 @@
 ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProcessor &p)
  : AudioProcessorEditor(&p), 
    processor(p),
-   glRenderer(p, glContext),
+   glRenderer(p, *this, glContext),
    patchEditor(*this, p),
    tabs(*this, juce::TabbedButtonBar::TabsAtTop)
 {

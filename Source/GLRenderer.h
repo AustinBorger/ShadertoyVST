@@ -14,6 +14,8 @@
 #include "PluginProcessor.h"
 #include "glext.h"
 
+class ShadertoyAudioProcessorEditor;
+
 //==============================================================================
 /*
 */
@@ -22,7 +24,8 @@ class GLRenderer  : public juce::Component,
                     public ShadertoyAudioProcessor::MidiListener
 {
 public:
-    GLRenderer(ShadertoyAudioProcessor& audioProcessor,
+    GLRenderer(ShadertoyAudioProcessor& processor,
+               ShadertoyAudioProcessorEditor &editor,
                juce::OpenGLContext &glContext);
     ~GLRenderer() override;
 
@@ -33,7 +36,7 @@ public:
     void openGLContextClosing() override;
     void renderOpenGL() override;
   
-    void handleMidiMessage(const juce::MidiMessage &message) override;
+    void handleMidiMessages(juce::MidiBuffer &midiBuffer) override;
 
 private:
     struct ProgramData {
@@ -56,9 +59,11 @@ private:
     static constexpr int MIDI_NUM_KEYS = 128;
 
     ShadertoyAudioProcessor& processor;
+    ShadertoyAudioProcessorEditor &editor;
     juce::OpenGLContext &glContext;
     juce::OpenGLShaderProgram copyProgram;
     juce::MidiMessageCollector midiCollector;
+    juce::CriticalSection midiCollectorMutex;
   
     std::vector<ProgramData> programData;
 

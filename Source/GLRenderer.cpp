@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "GLRenderer.h"
+#include "PluginEditor.h"
 #include <algorithm>
 
 static const juce::String vert =
@@ -40,8 +41,10 @@ static const juce::String copyFrag =
 
 //==============================================================================
 GLRenderer::GLRenderer(ShadertoyAudioProcessor& processor,
+                       ShadertoyAudioProcessorEditor &editor,
                        juce::OpenGLContext &glContext)
  : processor(processor),
+   editor(editor),
    glContext(glContext),
    copyProgram(glContext)
 {
@@ -122,7 +125,10 @@ void GLRenderer::renderOpenGL()
             int newSamplePos = int((elapsedMs / 1000.0) * 44100.0);
             int numSamples = newSamplePos - samplePos;
 
+            midiCollectorMutex.enter();
             midiCollector.removeNextBlockOfMessages(midiBuffer, numSamples);
+            midiCollectorMutex.exit();
+
             for (auto metadata : midiBuffer) {
                 const juce::MidiMessage &message = metadata.getMessage();
                 double timestamp = message.getTimeStamp();
@@ -222,9 +228,13 @@ void GLRenderer::renderOpenGL()
     }
 }
 
-void GLRenderer::handleMidiMessage(const juce::MidiMessage &message)
+void GLRenderer::handleMidiMessages(juce::MidiBuffer &midiBuffer)
 {
-    midiCollector.addMessageToQueue(message);
+    midiCollectorMutex.enter();
+    for (auto &metadata : midiBuffer) {
+        midiCollector.addMessageToQueue(metadata.getMessage());
+    }
+    midiCollectorMutex.exit();
 }
 
 void GLRenderer::resized()
