@@ -310,52 +310,33 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
 {
     ProgramData &program = programData[programIdx];
     isIntrinsic = false;
-    
-    static const char *RESOLUTION_INTRINSIC_NAME = "iResolution";
-    static const char *KEY_DOWN_INTRINSIC_NAME = "iKeyDown[0]";
-    static const char *KEY_UP_INTRINSIC_NAME = "iKeyUp[0]";
-    static const char *TIME_INTRINSIC_NAME = "iTime";
 
-    if (name == RESOLUTION_INTRINSIC_NAME) {
-        if (type != GL_FLOAT_VEC2 || size != 1) {
-            goto failure;
+    struct Intrinsic {
+        const char *name;
+        GLenum type;
+        GLint size;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> *uniform;
+    };
+
+    const Intrinsic intrinsics[] = {
+        { "iResolution", GL_FLOAT_VEC2, 1, &program.resolutionIntrinsic },
+        { "iKeyDown[0]", GL_FLOAT, MIDI_NUM_KEYS, &program.keyDownIntrinsic },
+        { "iKeyUp[0]", GL_FLOAT, MIDI_NUM_KEYS, &program.keyUpIntrinsic },
+        { "iTime", GL_FLOAT, 1, &program.timeIntrinsic }
+    };
+
+    for (int i = 0; i < sizeof(intrinsics) / sizeof(intrinsics[0]); i++) {
+        if (name == intrinsics[i].name) {
+            if (type != intrinsics[i].type || size != intrinsics[i].size) {
+                goto failure;
+            }
+
+            *intrinsics[i].uniform = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+                (new juce::OpenGLShaderProgram::Uniform(*program.program, intrinsics[i].name)));
+
+            isIntrinsic = true;
+            return true;
         }
-        
-        program.resolutionIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-            (new juce::OpenGLShaderProgram::Uniform(*program.program, RESOLUTION_INTRINSIC_NAME)));
-        
-        isIntrinsic = true;
-        return true;
-    } else if (name == KEY_DOWN_INTRINSIC_NAME) {
-        if (type != GL_FLOAT || size != MIDI_NUM_KEYS) {
-            goto failure;
-        }
-
-        program.keyDownIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-            (new juce::OpenGLShaderProgram::Uniform(*program.program, KEY_DOWN_INTRINSIC_NAME)));
-
-        isIntrinsic = true;
-        return true;
-    } else if (name == KEY_UP_INTRINSIC_NAME) {
-        if (type != GL_FLOAT || size != MIDI_NUM_KEYS) {
-            goto failure;
-        }
-
-        program.keyUpIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-            (new juce::OpenGLShaderProgram::Uniform(*program.program, KEY_UP_INTRINSIC_NAME)));
-
-        isIntrinsic = true;
-        return true;
-    } else if (name == TIME_INTRINSIC_NAME) {
-        if (type != GL_FLOAT || size != 1) {
-            goto failure;
-        }
-
-        program.timeIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-            (new juce::OpenGLShaderProgram::Uniform(*program.program, TIME_INTRINSIC_NAME)));
-
-        isIntrinsic = true;
-        return true;
     }
     
     return true;
