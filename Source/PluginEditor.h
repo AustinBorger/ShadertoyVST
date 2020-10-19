@@ -12,6 +12,9 @@
 #include "PluginProcessor.h"
 #include "GLRenderer.h"
 #include "PatchEditor.h"
+#include "Console.h"
+
+#define ENABLE_DEBUG_CONSOLE 1
 
 //==============================================================================
 /**
@@ -25,6 +28,13 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+
+    inline void logDebugMessage(const juce::String &message)
+    {
+#if ENABLE_DEBUG_CONSOLE == 1
+      debugConsole.logMessage(message);
+#endif
+    }
 
 private:
     class Tabs : public juce::TabbedComponent
@@ -47,6 +57,10 @@ private:
     GLRenderer glRenderer;
     PatchEditor patchEditor;
     Tabs tabs;
+
+#if ENABLE_DEBUG_CONSOLE == 1
+    Console debugConsole;
+#endif
 
     static constexpr uint16_t UI_WIDTH = 1280;
     static constexpr uint16_t UI_HEIGHT = 720;

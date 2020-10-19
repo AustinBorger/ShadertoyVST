@@ -27,8 +27,16 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
     tabs.addTab("Patch", bgColor, &patchEditor, false);
     tabs.addTab("Visualizer", bgColor, &glRenderer, false);
 
+#if ENABLE_DEBUG_CONSOLE == 1
+    tabs.addTab("Debug", bgColor, &debugConsole, false);
+#endif
+
     patchEditor.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
     glRenderer.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
+
+#if ENABLE_DEBUG_CONSOLE == 1
+    debugConsole.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
+#endif
 }
 
 ShadertoyAudioProcessorEditor::~ShadertoyAudioProcessorEditor()
@@ -47,15 +55,19 @@ void ShadertoyAudioProcessorEditor::resized()
     tabs.setBounds(getBounds());
     glRenderer.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
     patchEditor.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
+
+#if ENABLE_DEBUG_CONSOLE == 1
+    debugConsole.setBounds(0, TAB_HEIGHT, getWidth(), getHeight() - TAB_HEIGHT);
+#endif
 }
 
 void ShadertoyAudioProcessorEditor::currentTabChanged(int newCurrentTabIndex)
 {
-  if (newCurrentTabIndex == 0) {
-    setSize(UI_WIDTH, UI_HEIGHT + TAB_HEIGHT);
-  } else if (newCurrentTabIndex == 1) {
+  if (newCurrentTabIndex == 1) {
     setSize(processor.getVisualizationWidth(),
             processor.getVisualizationHeight() + TAB_HEIGHT);
+  } else {
+    setSize(UI_WIDTH, UI_HEIGHT + TAB_HEIGHT);
   }
 }
 

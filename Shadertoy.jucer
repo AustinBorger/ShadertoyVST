@@ -5,6 +5,8 @@
               pluginCharacteristicsValue="pluginWantsMidiIn">
   <MAINGROUP id="ORjiio" name="Shadertoy">
     <GROUP id="{A5F74135-4694-6E41-63D6-597CE7DA0232}" name="Source">
+      <FILE id="iFtDxV" name="Console.cpp" compile="1" resource="0" file="Source/Console.cpp"/>
+      <FILE id="lTolGU" name="Console.h" compile="0" resource="0" file="Source/Console.h"/>
       <FILE id="w4MGry" name="khrplatform.h" compile="0" resource="0" file="Source/khrplatform.h"/>
       <FILE id="fCm2qI" name="glext.h" compile="0" resource="0" file="Source/glext.h"/>
       <FILE id="K6Nrqi" name="GLRenderer.cpp" compile="1" resource="0" file="Source/GLRenderer.cpp"/>
