@@ -84,6 +84,7 @@ void GLRenderer::newOpenGLContextCreated()
 
     firstRender = 0.0;
     prevRender = 0.0;
+    firstMidiTimestamp = -1.0;
 
 #if GLRENDER_LOG_FPS == 1
     avgFPS = 0.0;
