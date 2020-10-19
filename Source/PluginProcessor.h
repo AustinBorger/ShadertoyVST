@@ -25,7 +25,7 @@ public:
     class MidiListener
     {
     public:
-        virtual void handleMidiMessages(juce::MidiBuffer &midiBuffer) = 0;
+        virtual void handleMidiMessages(double timestamp, juce::MidiBuffer &midiBuffer) = 0;
     };
 
     //==============================================================================
@@ -33,7 +33,7 @@ public:
     ~ShadertoyAudioProcessor() override;
 
     //==============================================================================
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
 
    #ifndef JucePlugin_PreferredChannelConfigurations
@@ -141,6 +141,8 @@ private:
     std::vector<ShaderData> shaderData;
     int visualizationWidth = 1280;
     int visualizationHeight = 720;
+    double mTimestamp = 0.0;
+    double mSampleRate = 44100.0;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ShadertoyAudioProcessor)

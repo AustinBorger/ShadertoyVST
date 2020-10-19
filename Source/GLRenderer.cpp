@@ -82,11 +82,18 @@ void GLRenderer::newOpenGLContextCreated()
         goto failure;
     }
 
-    processor.addMidiListener(this);
-    midiCollector.reset(44100.f);
     firstRender = 0.0;
+    prevRender = 0.0;
+    firstMidiTimestamp = -1.0;
+
+#if GLRENDER_LOG_FPS == 1
+    avgFPS = 0.0;
+    lastFPSLog = 0.0;
+#endif
+
     memset(keyDownLast, 0, sizeof(keyDownLast));
     memset(keyUpLast, 0, sizeof(keyUpLast));
+    processor.addMidiListener(this);
     
     validState = true;
     return;
@@ -117,33 +124,50 @@ void GLRenderer::renderOpenGL()
         int programIdx = processor.getProgramIdx();
         int backBufferWidth = (int)(getWidth() * scaleFactor);
         int backBufferHeight = (int)(getHeight() * scaleFactor);
-
         double now = juce::Time::getMillisecondCounterHiRes();
-        if (firstRender > 0.0) {
-            juce::MidiBuffer midiBuffer;
-            double elapsedMs = now - firstRender;
-            int newSamplePos = int((elapsedMs / 1000.0) * 44100.0);
-            int numSamples = newSamplePos - samplePos;
+        double elapsedSeconds;
 
-            midiCollectorMutex.enter();
-            midiCollector.removeNextBlockOfMessages(midiBuffer, numSamples);
-            midiCollectorMutex.exit();
-
-            for (auto metadata : midiBuffer) {
-                const juce::MidiMessage &message = metadata.getMessage();
-                double timestamp = message.getTimeStamp();
-                if (message.isNoteOn()) {
-                    keyDownLast[message.getNoteNumber()] = (double(samplePos) + timestamp) / 44100.0;
-                } else if (message.isNoteOff()) {
-                    keyUpLast[message.getNoteNumber()] = (double(samplePos) + timestamp) / 44100.0;
-                }
-            }
-
-            samplePos = newSamplePos;
-        } else {
+        if (firstRender < 0.001) {
             firstRender = now;
-            samplePos = 0;
         }
+        elapsedSeconds = (now - firstRender) / 1000.0;
+
+#if GLRENDER_LOG_FPS == 1
+        if (prevRender > 0.0) {
+            double instFPS = 1000.0 / (now - prevRender);
+            if (avgFPS > 0.0) {
+                const double a = 0.96;
+                avgFPS = avgFPS * a + instFPS * (1.0 - a);
+            }  else {
+                avgFPS = instFPS;
+            }
+        }
+
+        if (avgFPS > 0.0) {
+            if (now - lastFPSLog > 1000.0) {
+                editor.logDebugMessage("FPS: " + std::to_string(avgFPS));
+                lastFPSLog = now;
+            }
+        }
+#endif
+
+        mutex.enter();
+        if (firstMidiTimestamp >= 0.0) {
+            double currentMidiTimestamp = firstMidiTimestamp + elapsedSeconds - 0.016;
+            while (!midiFrames.empty() && midiFrames.front().timestamp <= currentMidiTimestamp) {
+                MidiFrame &midiFrame = midiFrames.front();
+                for (auto &metadata : midiFrame.buffer) {
+                    const juce::MidiMessage &message = metadata.getMessage();
+                    if (message.isNoteOn()) {
+                        keyDownLast[message.getNoteNumber()] = midiFrame.timestamp;
+                    } else if (message.isNoteOff()) {
+                        keyUpLast[message.getNoteNumber()] = midiFrame.timestamp;
+                    }
+                }
+                midiFrames.pop();
+            }
+        }
+        mutex.exit();
         
         if (programIdx < programData.size()) {
             ProgramData &program = programData[programIdx];
@@ -225,25 +249,32 @@ void GLRenderer::renderOpenGL()
             glClearColor(0, 0, 0, 1);
             glClear(GL_COLOR_BUFFER_BIT);
         }
+
+        prevRender = now;
     }
 }
 
-void GLRenderer::handleMidiMessages(juce::MidiBuffer &midiBuffer)
+void GLRenderer::handleMidiMessages(double timestamp, juce::MidiBuffer &midiBuffer)
 {
-    midiCollectorMutex.enter();
+    mutex.enter();
+
+    midiFrames.emplace();
+    midiFrames.back().timestamp = timestamp;
     for (auto &metadata : midiBuffer) {
-        midiCollector.addMessageToQueue(metadata.getMessage());
+        const juce::MidiMessage &message = metadata.getMessage();
+        midiFrames.back().buffer.addEvent(message, 0);
     }
-    midiCollectorMutex.exit();
+
+    if (firstMidiTimestamp < 0.0) {
+        firstMidiTimestamp = timestamp;
+    }
+
+    mutex.exit();
 }
 
 void GLRenderer::resized()
 {
-    // This method is where you should set the bounds of any child
-    // components that your component contains..
-    if (validState) {
-        // Empty
-    }
+    // Empty
 }
 
 bool GLRenderer::loadExtensions()

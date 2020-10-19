@@ -14,6 +14,8 @@
 #include "PluginProcessor.h"
 #include "glext.h"
 
+#define GLRENDER_LOG_FPS 0
+
 class ShadertoyAudioProcessorEditor;
 
 //==============================================================================
@@ -36,7 +38,7 @@ public:
     void openGLContextClosing() override;
     void renderOpenGL() override;
   
-    void handleMidiMessages(juce::MidiBuffer &midiBuffer) override;
+    void handleMidiMessages(double timestamp, juce::MidiBuffer &midiBuffer) override;
 
 private:
     struct ProgramData {
@@ -46,6 +48,11 @@ private:
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyDownIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyUpIntrinsic;
+    };
+
+    struct MidiFrame {
+        juce::MidiBuffer buffer;
+        double timestamp;
     };
 
     bool loadExtensions();
@@ -62,8 +69,7 @@ private:
     ShadertoyAudioProcessorEditor &editor;
     juce::OpenGLContext &glContext;
     juce::OpenGLShaderProgram copyProgram;
-    juce::MidiMessageCollector midiCollector;
-    juce::CriticalSection midiCollectorMutex;
+    juce::CriticalSection mutex;
   
     std::vector<ProgramData> programData;
 
@@ -75,10 +81,18 @@ private:
     GLuint mRenderTexture = 0;
     int mFramebufferWidth = 640;
     int mFramebufferHeight = 360;
-    double firstRender = 0.0f;
-    int samplePos = 0;
     double keyDownLast[MIDI_NUM_KEYS] = { };
     double keyUpLast[MIDI_NUM_KEYS] = { };
+    double firstRender = 0.0;
+    double prevRender = 0.0;
+    double firstMidiTimestamp = -1.0;
+
+    std::queue<MidiFrame> midiFrames;
+
+#if GLRENDER_LOG_FPS == 1
+    double avgFPS = 0.0;
+    double lastFPSLog = 0.0;
+#endif
     
     PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;
     PFNGLDRAWBUFFERSPROC glDrawBuffers;
