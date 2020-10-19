@@ -48,6 +48,7 @@ private:
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyDownIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyUpIntrinsic;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> timeIntrinsic;
     };
 
     struct MidiFrame {

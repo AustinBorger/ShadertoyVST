@@ -84,7 +84,6 @@ void GLRenderer::newOpenGLContextCreated()
 
     firstRender = 0.0;
     prevRender = 0.0;
-    firstMidiTimestamp = -1.0;
 
 #if GLRENDER_LOG_FPS == 1
     avgFPS = 0.0;
@@ -126,6 +125,7 @@ void GLRenderer::renderOpenGL()
         int backBufferHeight = (int)(getHeight() * scaleFactor);
         double now = juce::Time::getMillisecondCounterHiRes();
         double elapsedSeconds;
+        double currentMidiTimestamp = 0.0;
 
         if (firstRender < 0.001) {
             firstRender = now;
@@ -153,7 +153,7 @@ void GLRenderer::renderOpenGL()
 
         mutex.enter();
         if (firstMidiTimestamp >= 0.0) {
-            double currentMidiTimestamp = firstMidiTimestamp + elapsedSeconds - 0.016;
+            currentMidiTimestamp = firstMidiTimestamp + elapsedSeconds - 0.016;
             while (!midiFrames.empty() && midiFrames.front().timestamp <= currentMidiTimestamp) {
                 MidiFrame &midiFrame = midiFrames.front();
                 for (auto &metadata : midiFrame.buffer) {
@@ -197,6 +197,10 @@ void GLRenderer::renderOpenGL()
                     vals[i] = (GLfloat)keyUpLast[i];
                 }
                 program.keyUpIntrinsic->set(vals, MIDI_NUM_KEYS);
+            }
+
+            if (program.timeIntrinsic != nullptr) {
+                program.timeIntrinsic->set((GLfloat)currentMidiTimestamp);
             }
             
             if (processor.getShaderFixedSizeBuffer(programIdx)) {
@@ -310,6 +314,7 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
     static const char *RESOLUTION_INTRINSIC_NAME = "iResolution";
     static const char *KEY_DOWN_INTRINSIC_NAME = "iKeyDown[0]";
     static const char *KEY_UP_INTRINSIC_NAME = "iKeyUp[0]";
+    static const char *TIME_INTRINSIC_NAME = "iTime";
 
     if (name == RESOLUTION_INTRINSIC_NAME) {
         if (type != GL_FLOAT_VEC2 || size != 1) {
@@ -338,6 +343,16 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
 
         program.keyUpIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
             (new juce::OpenGLShaderProgram::Uniform(*program.program, KEY_UP_INTRINSIC_NAME)));
+
+        isIntrinsic = true;
+        return true;
+    } else if (name == TIME_INTRINSIC_NAME) {
+        if (type != GL_FLOAT || size != 1) {
+            goto failure;
+        }
+
+        program.timeIntrinsic = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+            (new juce::OpenGLShaderProgram::Uniform(*program.program, TIME_INTRINSIC_NAME)));
 
         isIntrinsic = true;
         return true;
