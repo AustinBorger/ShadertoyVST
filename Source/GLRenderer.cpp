@@ -156,7 +156,7 @@ void GLRenderer::renderOpenGL()
             currentMidiTimestamp = firstMidiTimestamp + elapsedSeconds - 0.016;
             while (!midiFrames.empty() && midiFrames.front().timestamp <= currentMidiTimestamp) {
                 MidiFrame &midiFrame = midiFrames.front();
-                for (auto &metadata : midiFrame.buffer) {
+                for (auto metadata : midiFrame.buffer) {
                     const juce::MidiMessage &message = metadata.getMessage();
                     if (message.isNoteOn()) {
                         keyDownLast[message.getNoteNumber()] = midiFrame.timestamp;
@@ -264,7 +264,7 @@ void GLRenderer::handleMidiMessages(double timestamp, juce::MidiBuffer &midiBuff
 
     midiFrames.emplace();
     midiFrames.back().timestamp = timestamp;
-    for (auto &metadata : midiBuffer) {
+    for (auto metadata : midiBuffer) {
         const juce::MidiMessage &message = metadata.getMessage();
         midiFrames.back().buffer.addEvent(message, 0);
     }
@@ -315,14 +315,14 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
         const char *name;
         GLenum type;
         GLint size;
-        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> *uniform;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> &uniform;
     };
 
     const Intrinsic intrinsics[] = {
-        { "iResolution", GL_FLOAT_VEC2, 1, &program.resolutionIntrinsic },
-        { "iKeyDown[0]", GL_FLOAT, MIDI_NUM_KEYS, &program.keyDownIntrinsic },
-        { "iKeyUp[0]", GL_FLOAT, MIDI_NUM_KEYS, &program.keyUpIntrinsic },
-        { "iTime", GL_FLOAT, 1, &program.timeIntrinsic }
+        { "iResolution", GL_FLOAT_VEC2, 1, program.resolutionIntrinsic },
+        { "iKeyDown[0]", GL_FLOAT, MIDI_NUM_KEYS, program.keyDownIntrinsic },
+        { "iKeyUp[0]", GL_FLOAT, MIDI_NUM_KEYS, program.keyUpIntrinsic },
+        { "iTime", GL_FLOAT, 1, program.timeIntrinsic }
     };
 
     for (int i = 0; i < sizeof(intrinsics) / sizeof(intrinsics[0]); i++) {
@@ -331,7 +331,7 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
                 goto failure;
             }
 
-            *intrinsics[i].uniform = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+            intrinsics[i].uniform = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
                 (new juce::OpenGLShaderProgram::Uniform(*program.program, intrinsics[i].name)));
 
             isIntrinsic = true;
