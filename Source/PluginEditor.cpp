@@ -41,6 +41,7 @@ ShadertoyAudioProcessorEditor::ShadertoyAudioProcessorEditor(ShadertoyAudioProce
 
 ShadertoyAudioProcessorEditor::~ShadertoyAudioProcessorEditor()
 {
+    processor.editorFreed();
 }
 
 void ShadertoyAudioProcessorEditor::paint(juce::Graphics& g)

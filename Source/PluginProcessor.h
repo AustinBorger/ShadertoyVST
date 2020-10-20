@@ -10,6 +10,8 @@
 
 #include <JuceHeader.h>
 
+class ShadertoyAudioProcessorEditor;
+
 //==============================================================================
 /**
 */
@@ -119,6 +121,8 @@ public:
       }
     }
 
+    void editorFreed() { this->editor = nullptr; }
+
 private:
     struct ShaderData
     {
@@ -131,6 +135,8 @@ private:
 
     void addUniformFloat(const juce::String &name);
     void addUniformInt(const juce::String &name);
+
+    ShadertoyAudioProcessorEditor *editor;
 
     std::vector<StateListener *> stateListeners;
     std::vector<MidiListener *> midiListeners;

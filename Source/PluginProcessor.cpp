@@ -11,16 +11,18 @@
 
 //==============================================================================
 ShadertoyAudioProcessor::ShadertoyAudioProcessor()
+ :
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
-                       )
+    AudioProcessor (BusesProperties()
+#if !JucePlugin_IsMidiEffect
+#if !JucePlugin_IsSynth
+                    .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
 #endif
+                    .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+#endif
+                    ),
+#endif
+    editor(nullptr)
 {
     programParam = std::move(std::unique_ptr<juce::AudioParameterInt>(new juce::AudioParameterInt("program", "program", 0, 100, 0)));
     addParameter(programParam.get());
@@ -106,6 +108,9 @@ void ShadertoyAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlo
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
     mSampleRate = sampleRate;
+    if (editor) {
+        editor->logDebugMessage("prepareToPlay: sample rate " + std::to_string(mSampleRate));
+    }
 }
 
 void ShadertoyAudioProcessor::releaseResources()
@@ -152,12 +157,18 @@ void ShadertoyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juc
 //==============================================================================
 bool ShadertoyAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    return true;
 }
 
 juce::AudioProcessorEditor* ShadertoyAudioProcessor::createEditor()
 {
-    return new ShadertoyAudioProcessorEditor(*this);
+    if (this->editor != nullptr) {
+        // Unlikely to impossible
+        this->editor->logDebugMessage("Warning: Editor not a singleton!");
+    }
+
+    this->editor = new ShadertoyAudioProcessorEditor(*this);
+    return this->editor;
 }
 
 //==============================================================================
