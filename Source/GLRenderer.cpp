@@ -127,6 +127,7 @@ void GLRenderer::renderOpenGL()
         double now = juce::Time::getMillisecondCounterHiRes();
         double elapsedSeconds;
         double currentAudioTimestamp = 0.0;
+        double sampleRate = 44100.0;
 
         if (firstRender < 0.001) {
             firstRender = now;
@@ -155,6 +156,7 @@ void GLRenderer::renderOpenGL()
         mutex.enter();
         if (firstAudioTimestamp >= 0.0) {
             currentAudioTimestamp = firstAudioTimestamp + elapsedSeconds - 0.016;
+            sampleRate = mSampleRate;
             while (!midiFrames.empty() && midiFrames.front().timestamp <= currentAudioTimestamp) {
                 MidiFrame &midiFrame = midiFrames.front();
                 for (auto metadata : midiFrame.buffer) {
@@ -202,6 +204,10 @@ void GLRenderer::renderOpenGL()
 
             if (program.timeIntrinsic != nullptr) {
                 program.timeIntrinsic->set((GLfloat)currentAudioTimestamp);
+            }
+
+            if (program.sampleRateIntrinsic != nullptr) {
+                program.sampleRateIntrinsic->set((GLfloat)sampleRate);
             }
             
             if (processor.getShaderFixedSizeBuffer(programIdx)) {
@@ -276,6 +282,8 @@ void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
         firstAudioTimestamp = timestamp;
     }
 
+    mSampleRate = sampleRate;
+
     mutex.exit();
 }
 
@@ -325,7 +333,8 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
         { "iResolution", GL_FLOAT_VEC2, 1, program.resolutionIntrinsic },
         { "iKeyDown[0]", GL_FLOAT, MIDI_NUM_KEYS, program.keyDownIntrinsic },
         { "iKeyUp[0]", GL_FLOAT, MIDI_NUM_KEYS, program.keyUpIntrinsic },
-        { "iTime", GL_FLOAT, 1, program.timeIntrinsic }
+        { "iTime", GL_FLOAT, 1, program.timeIntrinsic },
+        { "iSampleRate", GL_FLOAT, 1, program.sampleRateIntrinsic }
     };
 
     for (int i = 0; i < sizeof(intrinsics) / sizeof(intrinsics[0]); i++) {

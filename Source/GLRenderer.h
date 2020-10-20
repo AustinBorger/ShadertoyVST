@@ -51,6 +51,7 @@ private:
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyDownIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyUpIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> timeIntrinsic;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> sampleRateIntrinsic;
     };
 
     struct MidiFrame {
@@ -89,6 +90,7 @@ private:
     double firstRender = 0.0;
     double prevRender = 0.0;
     double firstAudioTimestamp = -1.0;
+    double mSampleRate = 44100.0;
 
     std::queue<MidiFrame> midiFrames;
 
