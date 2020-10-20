@@ -38,7 +38,8 @@ public:
     void openGLContextClosing() override;
     void renderOpenGL() override;
   
-    void handleAudioFrame(double timestamp, juce::AudioBuffer<float>& buffer,
+    void handleAudioFrame(double timestamp, double sampleRate,
+                          juce::AudioBuffer<float>& buffer,
                           juce::MidiBuffer &midiBuffer) override;
 
 private:

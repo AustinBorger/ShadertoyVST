@@ -27,7 +27,8 @@ public:
     class AudioListener
     {
     public:
-        virtual void handleAudioFrame(double timestamp, juce::AudioBuffer<float>& buffer,
+        virtual void handleAudioFrame(double timestamp, double sampleRate,
+                                      juce::AudioBuffer<float>& buffer,
                                       juce::MidiBuffer &midiBuffer) = 0;
     };
 

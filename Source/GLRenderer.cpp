@@ -259,7 +259,8 @@ void GLRenderer::renderOpenGL()
     }
 }
 
-void GLRenderer::handleAudioFrame(double timestamp, juce::AudioBuffer<float>& buffer,
+void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
+                                  juce::AudioBuffer<float>& buffer,
                                   juce::MidiBuffer &midiBuffer)
 {
     mutex.enter();
