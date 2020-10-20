@@ -23,7 +23,7 @@ class ShadertoyAudioProcessorEditor;
 */
 class GLRenderer  : public juce::Component,
                     public juce::OpenGLRenderer,
-                    public ShadertoyAudioProcessor::MidiListener
+                    public ShadertoyAudioProcessor::AudioListener
 {
 public:
     GLRenderer(ShadertoyAudioProcessor& processor,
@@ -38,7 +38,8 @@ public:
     void openGLContextClosing() override;
     void renderOpenGL() override;
   
-    void handleMidiMessages(double timestamp, juce::MidiBuffer &midiBuffer) override;
+    void handleAudioFrame(double timestamp, juce::AudioBuffer<float>& buffer,
+                          juce::MidiBuffer &midiBuffer) override;
 
 private:
     struct ProgramData {

@@ -24,10 +24,11 @@ public:
         virtual void processorStateChanged() = 0;
     };
 
-    class MidiListener
+    class AudioListener
     {
     public:
-        virtual void handleMidiMessages(double timestamp, juce::MidiBuffer &midiBuffer) = 0;
+        virtual void handleAudioFrame(double timestamp, juce::AudioBuffer<float>& buffer,
+                                      juce::MidiBuffer &midiBuffer) = 0;
     };
 
     //==============================================================================
@@ -42,7 +43,7 @@ public:
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
    #endif
 
-    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+    void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
     //==============================================================================
     juce::AudioProcessorEditor* createEditor() override;
@@ -108,16 +109,16 @@ public:
       }
     }
 
-    void addMidiListener(MidiListener *listener)
+    void addAudioListener(AudioListener *listener)
     {
-      midiListeners.emplace_back(listener);
+      audioListeners.emplace_back(listener);
     }
 
-    void removeMidiListener(MidiListener *listener)
+    void removeAudioListener(AudioListener *listener)
     {
-      auto it = std::find(midiListeners.begin(), midiListeners.end(), listener);
-      if (it != midiListeners.end()) {
-        midiListeners.erase(it);
+      auto it = std::find(audioListeners.begin(), audioListeners.end(), listener);
+      if (it != audioListeners.end()) {
+        audioListeners.erase(it);
       }
     }
 
@@ -139,7 +140,7 @@ private:
     ShadertoyAudioProcessorEditor *editor;
 
     std::vector<StateListener *> stateListeners;
-    std::vector<MidiListener *> midiListeners;
+    std::vector<AudioListener *> audioListeners;
 
     std::vector<std::unique_ptr<juce::AudioParameterFloat>> floatParams;
     std::vector<std::unique_ptr<juce::AudioParameterInt>> intParams;

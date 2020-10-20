@@ -147,8 +147,8 @@ void ShadertoyAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juc
 {
     juce::ScopedNoDenormals noDenormals;
 
-    for (auto listener : midiListeners) {
-        listener->handleMidiMessages(mTimestamp, midiMessages);
+    for (auto listener : audioListeners) {
+        listener->handleAudioFrame(mTimestamp, buffer, midiMessages);
     }
 
     mTimestamp += (double)(buffer.getNumSamples()) / mSampleRate;

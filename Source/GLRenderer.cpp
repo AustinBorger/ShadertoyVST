@@ -93,7 +93,7 @@ void GLRenderer::newOpenGLContextCreated()
 
     memset(keyDownLast, 0, sizeof(keyDownLast));
     memset(keyUpLast, 0, sizeof(keyUpLast));
-    processor.addMidiListener(this);
+    processor.addAudioListener(this);
     
     validState = true;
     return;
@@ -104,7 +104,7 @@ failure:
 
 void GLRenderer::openGLContextClosing()
 {
-    processor.removeMidiListener(this);
+    processor.removeAudioListener(this);
 
     copyProgram.release();
 
@@ -259,7 +259,8 @@ void GLRenderer::renderOpenGL()
     }
 }
 
-void GLRenderer::handleMidiMessages(double timestamp, juce::MidiBuffer &midiBuffer)
+void GLRenderer::handleAudioFrame(double timestamp, juce::AudioBuffer<float>& buffer,
+                                  juce::MidiBuffer &midiBuffer)
 {
     mutex.enter();
 
