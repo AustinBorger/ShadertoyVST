@@ -88,7 +88,7 @@ private:
     double keyUpLast[MIDI_NUM_KEYS] = { };
     double firstRender = 0.0;
     double prevRender = 0.0;
-    double firstMidiTimestamp = -1.0;
+    double firstAudioTimestamp = -1.0;
 
     std::queue<MidiFrame> midiFrames;
 

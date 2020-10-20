@@ -84,7 +84,7 @@ void GLRenderer::newOpenGLContextCreated()
 
     firstRender = 0.0;
     prevRender = 0.0;
-    firstMidiTimestamp = -1.0;
+    firstAudioTimestamp = -1.0;
 
 #if GLRENDER_LOG_FPS == 1
     avgFPS = 0.0;
@@ -126,7 +126,7 @@ void GLRenderer::renderOpenGL()
         int backBufferHeight = (int)(getHeight() * scaleFactor);
         double now = juce::Time::getMillisecondCounterHiRes();
         double elapsedSeconds;
-        double currentMidiTimestamp = 0.0;
+        double currentAudioTimestamp = 0.0;
 
         if (firstRender < 0.001) {
             firstRender = now;
@@ -153,9 +153,9 @@ void GLRenderer::renderOpenGL()
 #endif
 
         mutex.enter();
-        if (firstMidiTimestamp >= 0.0) {
-            currentMidiTimestamp = firstMidiTimestamp + elapsedSeconds - 0.016;
-            while (!midiFrames.empty() && midiFrames.front().timestamp <= currentMidiTimestamp) {
+        if (firstAudioTimestamp >= 0.0) {
+            currentAudioTimestamp = firstAudioTimestamp + elapsedSeconds - 0.016;
+            while (!midiFrames.empty() && midiFrames.front().timestamp <= currentAudioTimestamp) {
                 MidiFrame &midiFrame = midiFrames.front();
                 for (auto metadata : midiFrame.buffer) {
                     const juce::MidiMessage &message = metadata.getMessage();
@@ -201,7 +201,7 @@ void GLRenderer::renderOpenGL()
             }
 
             if (program.timeIntrinsic != nullptr) {
-                program.timeIntrinsic->set((GLfloat)currentMidiTimestamp);
+                program.timeIntrinsic->set((GLfloat)currentAudioTimestamp);
             }
             
             if (processor.getShaderFixedSizeBuffer(programIdx)) {
@@ -272,8 +272,8 @@ void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
         midiFrames.back().buffer.addEvent(message, 0);
     }
 
-    if (firstMidiTimestamp < 0.0) {
-        firstMidiTimestamp = timestamp;
+    if (firstAudioTimestamp < 0.0) {
+        firstAudioTimestamp = timestamp;
     }
 
     mutex.exit();
