@@ -82,6 +82,14 @@ void GLRenderer::newOpenGLContextCreated()
         goto failure;
     }
 
+    if (sizeAudioChannel0 > 0) {
+        audioChannel0 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel0]));
+    }
+
+    if (sizeAudioChannel1 > 0) {
+        audioChannel1 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel1]));
+    }
+
     firstRender = 0.0;
     prevRender = 0.0;
     firstAudioTimestamp = -1.0;
@@ -112,6 +120,11 @@ void GLRenderer::openGLContextClosing()
         item.program->release();
     }
     programData.clear();
+
+    audioChannel0 = nullptr;
+    sizeAudioChannel0 = 0;
+    audioChannel1 = nullptr;
+    sizeAudioChannel1 = 0;
 }
 
 void GLRenderer::renderOpenGL()
@@ -154,6 +167,7 @@ void GLRenderer::renderOpenGL()
 #endif
 
         mutex.enter();
+
         if (firstAudioTimestamp >= 0.0) {
             currentAudioTimestamp = firstAudioTimestamp + elapsedSeconds - 0.016;
             sampleRate = mSampleRate;
@@ -170,11 +184,24 @@ void GLRenderer::renderOpenGL()
                 midiFrames.pop();
             }
         }
-        mutex.exit();
         
         if (programIdx < programData.size()) {
             ProgramData &program = programData[programIdx];
             program.program->use();
+
+            if (program.audioChannel0 != nullptr) {
+                GLint sizeDiff = this->sizeAudioChannel0 - program.sizeAudioChannel0;
+                program.audioChannel0->set(this->audioChannel0.get() + sizeDiff,
+                                           program.sizeAudioChannel0);
+            }
+
+            if (program.audioChannel1 != nullptr) {
+                GLint sizeDiff = this->sizeAudioChannel1 - program.sizeAudioChannel1;
+                program.audioChannel1->set(this->audioChannel1.get() + sizeDiff,
+                                           program.sizeAudioChannel1);
+            }
+
+            mutex.exit();
         
             for (int i = 0; i < program.uniformFloats.size(); i++) {
                 float val = processor.getUniformFloat(i);
@@ -252,6 +279,8 @@ void GLRenderer::renderOpenGL()
                 glDrawArrays(GL_TRIANGLES, 0, 3);
             }
         } else {
+            mutex.exit();
+
             /*
              * Undefined program, just clear the back buffer
              */
@@ -263,6 +292,21 @@ void GLRenderer::renderOpenGL()
 
         prevRender = now;
     }
+}
+
+static void CopyAudioBuffer(float *dst,
+                            int dstSize,
+                            const float *src,
+                            int srcSize)
+{
+    int numSamplesReused = max(0, dstSize - srcSize);
+    int numSamplesCopied = dstSize - numSamplesReused;
+    int numSamplesSkipped = max(0, srcSize - dstSize);
+    if (numSamplesReused > 0) {
+        memmove(dst, dst + srcSize, numSamplesReused * sizeof(float));
+    }
+    memcpy(dst + numSamplesReused, src + numSamplesSkipped,
+           numSamplesCopied * sizeof(float));
 }
 
 void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
@@ -280,6 +324,18 @@ void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
 
     if (firstAudioTimestamp < 0.0) {
         firstAudioTimestamp = timestamp;
+    }
+
+    if (audioChannel0 != nullptr) {
+        CopyAudioBuffer(audioChannel0.get(), sizeAudioChannel0,
+                        buffer.getReadPointer(0),
+                        buffer.getNumSamples());
+    }
+
+    if (audioChannel1 != nullptr) {
+        CopyAudioBuffer(audioChannel1.get(), sizeAudioChannel1,
+                        buffer.getReadPointer(1),
+                        buffer.getNumSamples());
     }
 
     mSampleRate = sampleRate;
@@ -325,26 +381,37 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
     struct Intrinsic {
         const char *name;
         GLenum type;
-        GLint size;
+        GLint sizeMin;
+        GLint sizeMax;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> &uniform;
     };
 
     const Intrinsic intrinsics[] = {
-        { "iResolution", GL_FLOAT_VEC2, 1, program.resolutionIntrinsic },
-        { "iKeyDown[0]", GL_FLOAT, MIDI_NUM_KEYS, program.keyDownIntrinsic },
-        { "iKeyUp[0]", GL_FLOAT, MIDI_NUM_KEYS, program.keyUpIntrinsic },
-        { "iTime", GL_FLOAT, 1, program.timeIntrinsic },
-        { "iSampleRate", GL_FLOAT, 1, program.sampleRateIntrinsic }
+        { "iResolution", GL_FLOAT_VEC2, 1, 1, program.resolutionIntrinsic },
+        { "iKeyDown[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyDownIntrinsic },
+        { "iKeyUp[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyUpIntrinsic },
+        { "iTime", GL_FLOAT, 1, 1, program.timeIntrinsic },
+        { "iSampleRate", GL_FLOAT, 1, 1, program.sampleRateIntrinsic },
+        { "iAudioChannel0[0]", GL_FLOAT, 16, 2048, program.audioChannel0 },
+        { "iAudioChannel1[0]", GL_FLOAT, 16, 2048, program.audioChannel1 }
     };
 
     for (int i = 0; i < sizeof(intrinsics) / sizeof(intrinsics[0]); i++) {
         if (name == intrinsics[i].name) {
-            if (type != intrinsics[i].type || size != intrinsics[i].size) {
+            if (type != intrinsics[i].type || size < intrinsics[i].sizeMin || size > intrinsics[i].sizeMax) {
                 goto failure;
             }
 
             intrinsics[i].uniform = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
                 (new juce::OpenGLShaderProgram::Uniform(*program.program, intrinsics[i].name)));
+
+            if (name == "iAudioChannel0[0]") {
+                program.sizeAudioChannel0 = size;
+                this->sizeAudioChannel0 = max(this->sizeAudioChannel0, program.sizeAudioChannel0);
+            } else if (name == "iAudioChannel1[0]") {
+                program.sizeAudioChannel1 = size;
+                this->sizeAudioChannel1 = max(this->sizeAudioChannel1, program.sizeAudioChannel1);
+            }
 
             isIntrinsic = true;
             return true;
