@@ -30,7 +30,6 @@ public:
     ShadertoyAudioProcessorEditor(ShadertoyAudioProcessor&);
     ~ShadertoyAudioProcessorEditor() override;
 
-    //==============================================================================
     void paint(juce::Graphics&) override;
     void resized() override;
 
