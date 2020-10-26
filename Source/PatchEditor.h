@@ -70,6 +70,7 @@ private:
     void greyOutTopRightRegion();
     void loadTopRightRegion(int shaderIdx);
 
+    juce::Label shaderListLabel;
     juce::TableListBox shaderListBox;
     juce::TextButton newShaderButton;
     juce::TextButton deleteButton;

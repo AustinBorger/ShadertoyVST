@@ -32,6 +32,9 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor,
      * Shader list box (left region)
      */
 
+    addAndMakeVisible(shaderListLabel);
+    shaderListLabel.setText("Shaders", juce::NotificationType::dontSendNotification);
+
     addAndMakeVisible(shaderListBox);
     shaderListBox.setModel(&shaderListBoxModel);
     shaderListBox.getHeader().addColumn("ID", 0, 30, 30, -1,
@@ -109,10 +112,17 @@ PatchEditor::~PatchEditor()
 void PatchEditor::paint(juce::Graphics& g)
 {
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-    juce::Rectangle<int> behindShaderList = shaderListBox.getBounds();
+
+    juce::Rectangle<int> behindShaderList;
+    behindShaderList.setX(0);
+    behindShaderList.setY(0);
+    behindShaderList.setWidth(shaderListBox.getWidth());
     behindShaderList.setHeight(getHeight());
     g.setColour(shaderListBox.findColour(juce::ListBox::backgroundColourId));
     g.fillRect(behindShaderList);
+
+    g.setColour(juce::Colours::black);
+    g.fillRect(shaderListLabel.getBounds());
 
     juce::Rectangle<int> topRightRegion;
     topRightRegion.setX(behindShaderList.getWidth());
@@ -128,12 +138,14 @@ void PatchEditor::resized()
     /*
      * Shader list
      */
-
     juce::Rectangle<int> shaderListBounds;
     shaderListBounds.setX(0);
-    shaderListBounds.setY(0);
-    shaderListBounds.setHeight(getBounds().getHeight() - 40);
     shaderListBounds.setWidth(getBounds().getWidth() / 3);
+
+    shaderListLabel.setBounds(shaderListBounds.getX(), 0, shaderListBounds.getWidth(), 30);
+
+    shaderListBounds.setY(shaderListLabel.getHeight());
+    shaderListBounds.setHeight(getBounds().getHeight() - shaderListLabel.getHeight() - 40);
 
     shaderListBox.setBounds(shaderListBounds);
     shaderListBox.getHeader().setColumnWidth(0, 40);
