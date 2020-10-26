@@ -18,9 +18,12 @@
 
 #define ENABLE_DEBUG_CONSOLE 1
 
-//==============================================================================
-/**
-*/
+/*
+ * ShadertoyAudioProcessorEditor
+ *    Top-level component of the GUI. Contains a tabbed component
+ *    which switches between the patch editor GUI and the OpenGL-
+ *    rendered visualzation.
+ */
 class ShadertoyAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
@@ -28,7 +31,7 @@ public:
     ~ShadertoyAudioProcessorEditor() override;
 
     //==============================================================================
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
 
     inline void logDebugMessage(const juce::String &message)

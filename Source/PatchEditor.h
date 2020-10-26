@@ -15,9 +15,12 @@
 
 class ShadertoyAudioProcessorEditor;
 
-//==============================================================================
 /*
-*/
+ * PatchEditor
+ *    Describes the GUI for editing the visualization patch.
+ *    Provides controls for adding/deleting fragment shaders
+ *    and modifying shader-specific / global properties.
+ */
 class PatchEditor  : public juce::Component,
                      public juce::Button::Listener,
                      public juce::TextEditor::Listener,

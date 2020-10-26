@@ -14,9 +14,11 @@
 
 class ShadertoyAudioProcessorEditor;
 
-//==============================================================================
-/**
-*/
+/*
+ * ShadertoyAudioProcessor
+ *    The audio processor. This is responsible for saving / loading patches
+ *    and directing audio / midi / parameter input to the visualization.
+ */
 class ShadertoyAudioProcessor  : public juce::AudioProcessor
 {
 public:

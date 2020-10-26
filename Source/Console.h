@@ -12,9 +12,10 @@
 
 #include <JuceHeader.h>
 
-//==============================================================================
 /*
-*/
+ * Console
+ *    Component for rendering debug logs
+ */
 class Console : public juce::Component
 {
 public:

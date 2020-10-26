@@ -18,9 +18,10 @@
 
 class ShadertoyAudioProcessorEditor;
 
-//==============================================================================
 /*
-*/
+ * GLRenderer
+ *    Renders the OpenGL-powered visualization.
+ */
 class GLRenderer  : public juce::Component,
                     public juce::OpenGLRenderer,
                     public ShadertoyAudioProcessor::AudioListener
