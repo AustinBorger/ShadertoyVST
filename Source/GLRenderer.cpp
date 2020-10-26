@@ -82,14 +82,6 @@ void GLRenderer::newOpenGLContextCreated()
         goto failure;
     }
 
-    if (sizeAudioChannel0 > 0) {
-        audioChannel0 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel0]));
-    }
-
-    if (sizeAudioChannel1 > 0) {
-        audioChannel1 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel1]));
-    }
-
     firstRender = 0.0;
     prevRender = 0.0;
     firstAudioTimestamp = -1.0;
@@ -169,7 +161,7 @@ void GLRenderer::renderOpenGL()
         mutex.enter();
 
         if (firstAudioTimestamp >= 0.0) {
-            currentAudioTimestamp = firstAudioTimestamp + elapsedSeconds - 0.016;
+            currentAudioTimestamp = firstAudioTimestamp + elapsedSeconds - DELAY_LATENCY;
             sampleRate = mSampleRate;
             while (!midiFrames.empty() && midiFrames.front().timestamp <= currentAudioTimestamp) {
                 MidiFrame &midiFrame = midiFrames.front();
@@ -189,15 +181,15 @@ void GLRenderer::renderOpenGL()
             ProgramData &program = programData[programIdx];
             program.program->use();
 
-            if (program.audioChannel0 != nullptr) {
+            if (program.audioChannel0 != nullptr && audioChannel0 != nullptr) {
                 GLint sizeDiff = this->sizeAudioChannel0 - program.sizeAudioChannel0;
-                program.audioChannel0->set(this->audioChannel0.get() + sizeDiff,
+                program.audioChannel0->set(this->audioChannel0.get() + sizeDiff - (GLint)(sampleRate * DELAY_LATENCY),
                                            program.sizeAudioChannel0);
             }
 
-            if (program.audioChannel1 != nullptr) {
+            if (program.audioChannel1 != nullptr && audioChannel1 != nullptr) {
                 GLint sizeDiff = this->sizeAudioChannel1 - program.sizeAudioChannel1;
-                program.audioChannel1->set(this->audioChannel1.get() + sizeDiff,
+                program.audioChannel1->set(this->audioChannel1.get() + sizeDiff - (GLint)(sampleRate * DELAY_LATENCY),
                                            program.sizeAudioChannel1);
             }
 
@@ -294,10 +286,10 @@ void GLRenderer::renderOpenGL()
     }
 }
 
-static void CopyAudioBuffer(float *dst,
-                            int dstSize,
-                            const float *src,
-                            int srcSize)
+static void AdvanceAudioBuffer(float *dst,
+                               int dstSize,
+                               const float *src,
+                               int srcSize)
 {
     int numSamplesReused = max(0, dstSize - srcSize);
     int numSamplesCopied = dstSize - numSamplesReused;
@@ -324,18 +316,28 @@ void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
 
     if (firstAudioTimestamp < 0.0) {
         firstAudioTimestamp = timestamp;
+
+        if (sizeAudioChannel0 > 0) {
+            sizeAudioChannel0 += (GLint)(sampleRate * DELAY_LATENCY);
+            audioChannel0 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel0]));
+        }
+
+        if (sizeAudioChannel1 > 0) {
+            sizeAudioChannel1 += (GLint)(sampleRate * DELAY_LATENCY);
+            audioChannel1 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel1]));
+        }
     }
 
     if (audioChannel0 != nullptr) {
-        CopyAudioBuffer(audioChannel0.get(), sizeAudioChannel0,
-                        buffer.getReadPointer(0),
-                        buffer.getNumSamples());
+        AdvanceAudioBuffer(audioChannel0.get(), sizeAudioChannel0,
+                           buffer.getReadPointer(0),
+                           buffer.getNumSamples());
     }
 
     if (audioChannel1 != nullptr) {
-        CopyAudioBuffer(audioChannel1.get(), sizeAudioChannel1,
-                        buffer.getReadPointer(1),
-                        buffer.getNumSamples());
+        AdvanceAudioBuffer(audioChannel1.get(), sizeAudioChannel1,
+                           buffer.getReadPointer(1),
+                           buffer.getNumSamples());
     }
 
     mSampleRate = sampleRate;

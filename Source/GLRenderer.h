@@ -72,6 +72,7 @@ private:
     void alertError(const juce::String &title, const juce::String &message);
 
     static constexpr int MIDI_NUM_KEYS = 128;
+    static constexpr double DELAY_LATENCY = 0.016;
 
     ShadertoyAudioProcessor& processor;
     ShadertoyAudioProcessorEditor &editor;
