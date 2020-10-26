@@ -83,6 +83,7 @@ private:
     juce::TextEditor fixedSizeHeightEditor;
     juce::Label fixedSizeHeightLabel;
 
+    juce::Label globalPropertiesLabel;
     juce::TextEditor visuWidthEditor;
     juce::Label visuWidthLabel;
     juce::TextEditor visuHeightEditor;

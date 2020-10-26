@@ -86,6 +86,10 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor,
     /*
      * Bottom right region (global properties)
      */
+    
+    addAndMakeVisible(globalPropertiesLabel);
+    globalPropertiesLabel.setText("Global Properties", juce::NotificationType::dontSendNotification);
+    globalPropertiesLabel.setColour(juce::Label::textColourId, juce::Colours::black);
 
     addAndMakeVisible(visuWidthEditor);
     visuWidthEditor.setMultiLine(false);
@@ -138,6 +142,9 @@ void PatchEditor::paint(juce::Graphics& g)
 
     g.setColour(juce::Colours::white);
     g.fillRect(shaderPropertiesLabel.getBounds());
+
+    g.setColour(juce::Colours::white);
+    g.fillRect(globalPropertiesLabel.getBounds());
 }
 
 void PatchEditor::resized()
@@ -201,11 +208,14 @@ void PatchEditor::resized()
      * Bottom right region
      */
 
+    globalPropertiesLabel.setBounds(shaderListBounds.getWidth(), topRightRegion.getY() + topRightRegion.getHeight(),
+                                    topRightRegion.getWidth(), 30);
+
     juce::Rectangle<int> bottomRightRegion;
     bottomRightRegion.setX(topRightRegion.getX());
-    bottomRightRegion.setY(topRightRegion.getY() + topRightRegion.getHeight());
+    bottomRightRegion.setY(globalPropertiesLabel.getY() + globalPropertiesLabel.getHeight());
     bottomRightRegion.setWidth(topRightRegion.getWidth());
-    bottomRightRegion.setHeight(getHeight() - topRightRegion.getHeight());
+    bottomRightRegion.setHeight(getHeight() - topRightRegion.getHeight() - globalPropertiesLabel.getHeight());
 
     visuWidthLabel.setBounds(bottomRightRegion.getX() + padding, bottomRightRegion.getY() + padding, 150, 20);
     visuWidthEditor.setBounds(bottomRightRegion.getX() + padding + 150, bottomRightRegion.getY() + 10, 75, 20);
