@@ -320,11 +320,13 @@ void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
         if (sizeAudioChannel0 > 0) {
             sizeAudioChannel0 += (GLint)(sampleRate * DELAY_LATENCY);
             audioChannel0 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel0]));
+            memset(audioChannel0.get(), 0, sizeAudioChannel0 * sizeof(float));
         }
 
         if (sizeAudioChannel1 > 0) {
             sizeAudioChannel1 += (GLint)(sampleRate * DELAY_LATENCY);
             audioChannel1 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel1]));
+            memset(audioChannel1.get(), 0, sizeAudioChannel1 * sizeof(float));
         }
     }
 
