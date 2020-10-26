@@ -58,6 +58,10 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor,
      * Top right region (shader properties)
      */
 
+    addAndMakeVisible(shaderPropertiesLabel);
+    shaderPropertiesLabel.setText("Shader Properties", juce::NotificationType::dontSendNotification);
+    shaderPropertiesLabel.setColour(juce::Label::textColourId, juce::Colours::black);
+
     addAndMakeVisible(fixedSizeButton);
     fixedSizeButton.addListener(this);
     
@@ -131,6 +135,9 @@ void PatchEditor::paint(juce::Graphics& g)
     topRightRegion.setHeight(getHeight() / 2);
     g.setColour(juce::Colour::fromRGB(128, 128, 128));
     g.fillRect(topRightRegion);
+
+    g.setColour(juce::Colours::white);
+    g.fillRect(shaderPropertiesLabel.getBounds());
 }
 
 void PatchEditor::resized()
@@ -164,12 +171,16 @@ void PatchEditor::resized()
     /*
      * Top right region
      */
+
+    shaderPropertiesLabel.setBounds(shaderListBounds.getWidth(), 0,
+                                    getWidth() - shaderListBounds.getWidth(),
+                                    30);
     
     juce::Rectangle<int> topRightRegion;
     topRightRegion.setX(shaderListBounds.getWidth());
-    topRightRegion.setY(0);
-    topRightRegion.setWidth(getWidth() - shaderListBounds.getWidth());
-    topRightRegion.setHeight(getHeight() / 2);
+    topRightRegion.setY(shaderPropertiesLabel.getHeight());
+    topRightRegion.setWidth(shaderPropertiesLabel.getWidth());
+    topRightRegion.setHeight(getHeight() / 2 - shaderPropertiesLabel.getHeight());
     
     int padding = 10;
     int fixedSizeButtonHeight = 20;
@@ -192,7 +203,7 @@ void PatchEditor::resized()
 
     juce::Rectangle<int> bottomRightRegion;
     bottomRightRegion.setX(topRightRegion.getX());
-    bottomRightRegion.setY(topRightRegion.getHeight());
+    bottomRightRegion.setY(topRightRegion.getY() + topRightRegion.getHeight());
     bottomRightRegion.setWidth(topRightRegion.getWidth());
     bottomRightRegion.setHeight(getHeight() - topRightRegion.getHeight());
 

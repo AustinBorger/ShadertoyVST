@@ -76,6 +76,7 @@ private:
     juce::TextButton deleteButton;
     juce::TextButton reloadButton;
 
+    juce::Label shaderPropertiesLabel;
     juce::ToggleButton fixedSizeButton;
     juce::TextEditor fixedSizeWidthEditor;
     juce::Label fixedSizeWidthLabel;
