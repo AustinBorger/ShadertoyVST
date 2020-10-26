@@ -3,7 +3,7 @@
 
     PatchEditor.cpp
     Created: 17 Aug 2020 7:16:02pm
-    Author:  Austin
+    Author:  Austin Borger, aaborger@gmail.com
 
   ==============================================================================
 */

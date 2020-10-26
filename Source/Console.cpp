@@ -3,7 +3,7 @@
 
     Console.cpp
     Created: 18 Oct 2020 5:53:04pm
-    Author:  Austin
+    Author:  Austin Borger, aaborger@gmail.com
 
   ==============================================================================
 */

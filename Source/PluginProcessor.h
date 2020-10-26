@@ -1,7 +1,9 @@
 /*
   ==============================================================================
 
-    This file contains the basic framework code for a JUCE plugin processor.
+    PluginProcessor.h
+    Created: 15 Aug 2020 11:22:17pm
+    Author:  Austin Borger, aaborger@gmail.com
 
   ==============================================================================
 */
