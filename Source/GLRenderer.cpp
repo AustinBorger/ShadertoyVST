@@ -286,10 +286,14 @@ void GLRenderer::renderOpenGL()
     }
 }
 
-static void AdvanceAudioBuffer(float *dst,
-                               int dstSize,
-                               const float *src,
-                               int srcSize)
+/*
+ * AdvanceAudioBuffer
+ *    Updates the audio buffer with more current samples.
+ */
+static void AdvanceAudioBuffer(float *dst,       // The history buffer
+                               int dstSize,      // The size of the history buffer
+                               const float *src, // The buffer filled with new samples
+                               int srcSize)      // The number of new samples
 {
     int numSamplesReused = max(0, dstSize - srcSize);
     int numSamplesCopied = dstSize - numSamplesReused;
@@ -301,6 +305,10 @@ static void AdvanceAudioBuffer(float *dst,
            numSamplesCopied * sizeof(float));
 }
 
+/*
+ * GLRenderer::handleAudioFrame
+ *    Handles incoming audio samples / midi events.
+ */
 void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
                                   juce::AudioBuffer<float>& buffer,
                                   juce::MidiBuffer &midiBuffer)

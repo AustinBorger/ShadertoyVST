@@ -72,7 +72,17 @@ private:
                                GLint size, bool &isIntrinsic, int programIdx);
     void alertError(const juce::String &title, const juce::String &message);
 
+    /*
+     * Number of keys on a midi keyboard
+     */
     static constexpr int MIDI_NUM_KEYS = 128;
+
+    /*
+     * processBlock, and by extension handleAudioFrame, is called at irregular
+     * intervals. To smooth out input audio and midi, we introduce an artificial
+     * delay. As a result the sample position and midi timestamps provided to
+     * the shaders advance at a (roughly) constant pace between frames.
+     */
     static constexpr double DELAY_LATENCY = 0.016;
 
     ShadertoyAudioProcessor& processor;
