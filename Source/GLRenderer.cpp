@@ -131,7 +131,7 @@ void GLRenderer::renderOpenGL()
 
     if (validState) {
         double scaleFactor = glContext.getRenderingScale(); // DPI scaling
-        int programIdx = processor.getProgramIdx();
+        int programIdx = processor.getOutputProgramIdx();
         int backBufferWidth = (int)(getWidth() * scaleFactor);
         int backBufferHeight = (int)(getHeight() * scaleFactor);
         double now = juce::Time::getMillisecondCounterHiRes();

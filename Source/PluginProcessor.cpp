@@ -26,8 +26,9 @@ ShadertoyAudioProcessor::ShadertoyAudioProcessor()
 #endif
     editor(nullptr)
 {
-    programParam = std::move(std::unique_ptr<juce::AudioParameterInt>(new juce::AudioParameterInt("program", "program", 0, 100, 0)));
-    addParameter(programParam.get());
+    outputProgramParam = std::move(std::unique_ptr<juce::AudioParameterInt>
+        (new juce::AudioParameterInt("program_output", "program_output", 0, 100, 0)));
+    addParameter(outputProgramParam.get());
 
     for (int i = 0; i < 256; i++) {
         addUniformFloat("float" + std::to_string(i));
@@ -265,9 +266,9 @@ int ShadertoyAudioProcessor::getUniformInt(int i)
     return intParams[i]->get();
 }
 
-int ShadertoyAudioProcessor::getProgramIdx()
+int ShadertoyAudioProcessor::getOutputProgramIdx()
 {
-    return programParam->get();
+    return outputProgramParam->get();
 }
 
 void ShadertoyAudioProcessor::addShaderFileEntry()
