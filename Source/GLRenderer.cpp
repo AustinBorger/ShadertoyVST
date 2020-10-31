@@ -91,8 +91,11 @@ void GLRenderer::newOpenGLContextCreated()
     lastFPSLog = 0.0;
 #endif
 
-    memset(keyDownLast, 0, sizeof(keyDownLast));
-    memset(keyUpLast, 0, sizeof(keyUpLast));
+    for (int i = 0; i < MIDI_NUM_KEYS; i++) {
+        keyDownLast[i] = -1.0f;
+        keyUpLast[i] = -1.0f;
+    }
+
     processor.addAudioListener(this);
     
     validState = true;
@@ -112,6 +115,8 @@ void GLRenderer::openGLContextClosing()
         item.program->release();
     }
     programData.clear();
+
+    midiFrames = { };
 
     audioChannel0 = nullptr;
     sizeAudioChannel0 = 0;
