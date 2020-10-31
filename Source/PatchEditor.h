@@ -85,6 +85,8 @@ private:
     juce::Label fixedSizeWidthLabel;
     juce::TextEditor fixedSizeHeightEditor;
     juce::Label fixedSizeHeightLabel;
+    juce::ComboBox destinationBox;
+    juce::Label destinationLabel;
 
     juce::Label globalPropertiesLabel;
     juce::TextEditor visuWidthEditor;

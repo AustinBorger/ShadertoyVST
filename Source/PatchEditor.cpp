@@ -80,6 +80,17 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor,
     
     addAndMakeVisible(fixedSizeHeightLabel);
     fixedSizeHeightLabel.setText("Height:", juce::NotificationType::dontSendNotification);
+
+    addAndMakeVisible(destinationBox);
+    destinationBox.addItem("Output", 1);
+    destinationBox.addItem("Buffer A", 2);
+    destinationBox.addItem("Buffer B", 3);
+    destinationBox.addItem("Buffer C", 4);
+    destinationBox.addItem("Buffer D", 5);
+    destinationBox.setSelectedId(1, juce::NotificationType::dontSendNotification);
+
+    addAndMakeVisible(destinationLabel);
+    destinationLabel.setText("Destination:", juce::NotificationType::dontSendNotification);
     
     greyOutTopRightRegion();
 
@@ -203,6 +214,12 @@ void PatchEditor::resized()
                                    75, 20);
     fixedSizeHeightEditor.setBounds(topRightRegion.getX() + padding + 60, topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space,
                                     75, 20);
+
+    destinationLabel.setBounds(topRightRegion.getX() + padding, topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space + 20 + space,
+                               90, 20);
+    destinationBox.setBounds(topRightRegion.getX() + padding + destinationLabel.getWidth(),
+                             topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space + 20 + space,
+                             100, 20);
 
     /*
      * Bottom right region
