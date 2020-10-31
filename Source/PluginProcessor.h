@@ -71,6 +71,7 @@ public:
     int getUniformInt(int i);
   
     int getOutputProgramIdx();
+    int getBufferProgramIdx(int bufferId);
 
     int getVisualizationWidth()
       { return visualizationWidth; }
@@ -148,6 +149,7 @@ private:
     std::vector<std::unique_ptr<juce::AudioParameterFloat>> floatParams;
     std::vector<std::unique_ptr<juce::AudioParameterInt>> intParams;
     std::unique_ptr<juce::AudioParameterInt> outputProgramParam;
+    std::vector<std::unique_ptr<juce::AudioParameterInt>> bufferProgramParams;
     std::vector<ShaderData> shaderData;
     int visualizationWidth = 1280;
     int visualizationHeight = 720;
