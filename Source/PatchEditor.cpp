@@ -177,11 +177,11 @@ void PatchEditor::resized()
     shaderListBox.getHeader().setColumnWidth(1, shaderListBounds.getWidth() - 40);
     
     int buttonWidth = 75;
-    int space = 10;
-    int totalWidth = buttonWidth + space + buttonWidth + space + buttonWidth;
+    int spacing = 10;
+    int totalWidth = buttonWidth + spacing + buttonWidth + spacing + buttonWidth;
     int newShaderX = (shaderListBounds.getWidth() - totalWidth) / 2;
-    int deleteX = newShaderX + buttonWidth + space;
-    int reloadX = deleteX + buttonWidth + space;
+    int deleteX = newShaderX + buttonWidth + spacing;
+    int reloadX = deleteX + buttonWidth + spacing;
     newShaderButton.setBounds(newShaderX, getHeight() - 30, buttonWidth, 20);
     deleteButton.setBounds(deleteX, getHeight() - 30, buttonWidth, 20);
     reloadButton.setBounds(reloadX, getHeight() - 30, buttonWidth, 20);
@@ -201,25 +201,27 @@ void PatchEditor::resized()
     topRightRegion.setHeight(getHeight() / 2 - shaderPropertiesLabel.getHeight());
     
     int padding = 10;
-    int fixedSizeButtonHeight = 20;
     fixedSizeButton.setBounds(topRightRegion.getX() + padding,
                               topRightRegion.getY() + padding,
-                              175, fixedSizeButtonHeight);
+                              175, 20);
                               
-    fixedSizeWidthLabel.setBounds(topRightRegion.getX() + padding, topRightRegion.getY() + padding + fixedSizeButtonHeight + space,
-                                  60, 20);
-    fixedSizeWidthEditor.setBounds(topRightRegion.getX() + padding + 60, topRightRegion.getY() + padding + 20 + padding,
-                                   75, 20);
-    fixedSizeHeightLabel.setBounds(topRightRegion.getX() + padding, topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space,
-                                   75, 20);
-    fixedSizeHeightEditor.setBounds(topRightRegion.getX() + padding + 60, topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space,
-                                    75, 20);
+    fixedSizeWidthLabel.setBounds(topRightRegion.getX() + padding,
+                                  fixedSizeButton.getY() + fixedSizeButton.getHeight() + spacing,
+                                  65, 20);
+    fixedSizeWidthEditor.setBounds(fixedSizeWidthLabel.getX() + fixedSizeWidthLabel.getWidth(),
+                                   fixedSizeWidthLabel.getY(), 75, 20);
 
-    destinationLabel.setBounds(topRightRegion.getX() + padding, topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space + 20 + space,
+    fixedSizeHeightLabel.setBounds(topRightRegion.getX() + padding,
+                                   fixedSizeWidthLabel.getY() + fixedSizeWidthLabel.getHeight() + spacing,
+                                   65, 20);
+    fixedSizeHeightEditor.setBounds(fixedSizeHeightLabel.getX() + fixedSizeHeightLabel.getWidth(),
+                                    fixedSizeHeightLabel.getY(), 75, 20);
+
+    destinationLabel.setBounds(topRightRegion.getX() + padding,
+                               fixedSizeHeightEditor.getY() + fixedSizeHeightEditor.getHeight() + spacing,
                                90, 20);
-    destinationBox.setBounds(topRightRegion.getX() + padding + destinationLabel.getWidth(),
-                             topRightRegion.getY() + padding + fixedSizeButtonHeight + space + 20 + space + 20 + space,
-                             100, 20);
+    destinationBox.setBounds(destinationLabel.getX() + destinationLabel.getWidth(),
+                             destinationLabel.getY(), 100, 20);
 
     /*
      * Bottom right region
@@ -234,10 +236,17 @@ void PatchEditor::resized()
     bottomRightRegion.setWidth(topRightRegion.getWidth());
     bottomRightRegion.setHeight(getHeight() - topRightRegion.getHeight() - globalPropertiesLabel.getHeight());
 
-    visuWidthLabel.setBounds(bottomRightRegion.getX() + padding, bottomRightRegion.getY() + padding, 150, 20);
-    visuWidthEditor.setBounds(bottomRightRegion.getX() + padding + 150, bottomRightRegion.getY() + 10, 75, 20);
-    visuHeightLabel.setBounds(bottomRightRegion.getX() + padding, bottomRightRegion.getY() + padding + 20 + padding, 150, 20);
-    visuHeightEditor.setBounds(bottomRightRegion.getX() + padding + 150, bottomRightRegion.getY() + padding + 20 + padding, 75, 20);
+    visuWidthLabel.setBounds(bottomRightRegion.getX() + padding,
+                             bottomRightRegion.getY() + padding,
+                             150, 20);
+    visuWidthEditor.setBounds(visuWidthLabel.getX() + visuWidthLabel.getWidth(),
+                              visuWidthLabel.getY(), 75, 20);
+
+    visuHeightLabel.setBounds(bottomRightRegion.getX() + padding,
+                              visuWidthLabel.getY() + visuWidthLabel.getHeight() + spacing,
+                              150, 20);
+    visuHeightEditor.setBounds(visuHeightLabel.getX() + visuHeightLabel.getWidth(),
+                               visuHeightLabel.getY(), 75, 20);
 }
 
 void PatchEditor::buttonClicked(juce::Button *button)
