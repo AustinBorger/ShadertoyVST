@@ -181,6 +181,7 @@ void ShadertoyAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     for (int i = 0; i < shaderData.size(); i++) {
         juce::XmlElement *shaderFileElement = new juce::XmlElement("ShaderFile");
         shaderFileElement->setAttribute("Path", shaderData[i].path);
+        shaderFileElement->setAttribute("Destination", shaderData[i].destination);
         
         if (shaderData[i].fixedSizeBuffer) {
             juce::XmlElement *fixedSizeData = new juce::XmlElement("FixedSizeBuffer");
@@ -210,6 +211,9 @@ void ShadertoyAudioProcessor::setStateInformation(const void* data, int sizeInBy
                 const juce::String &shaderFile = child->getStringAttribute("Path");
                 addShaderFileEntry();
                 setShaderFile(getNumShaderFiles() - 1, shaderFile);
+                shaderData.back().destination =
+                    child->getIntAttribute("Destination", shaderData.back().destination);
+
                 juce::XmlElement *shaderChild = child->getFirstChildElement();
                 while (shaderChild != nullptr) {
                     if (shaderChild->hasTagName("FixedSizeBuffer")) {
