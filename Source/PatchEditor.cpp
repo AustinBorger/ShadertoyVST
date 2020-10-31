@@ -87,7 +87,7 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor,
     destinationBox.addItem("Buffer B", 3);
     destinationBox.addItem("Buffer C", 4);
     destinationBox.addItem("Buffer D", 5);
-    destinationBox.setSelectedId(1, juce::NotificationType::dontSendNotification);
+    destinationBox.setEnabled(false);
 
     addAndMakeVisible(destinationLabel);
     destinationLabel.setText("Destination:", juce::NotificationType::dontSendNotification);
@@ -342,6 +342,9 @@ void PatchEditor::greyOutTopRightRegion()
     if (!fixedSizeWidthEditor.isReadOnly()) {
         greyOutFixedSizeEditors();
     }
+
+    destinationBox.setEnabled(false);
+    destinationBox.setSelectedId(0, juce::NotificationType::dontSendNotification);
 }
 
 void PatchEditor::loadTopRightRegion(int shaderIdx)
@@ -360,6 +363,9 @@ void PatchEditor::loadTopRightRegion(int shaderIdx)
         fixedSizeWidthEditor.setText(std::to_string(processor.getShaderFixedSizeWidth(shaderIdx)), false);
         fixedSizeHeightEditor.setText(std::to_string(processor.getShaderFixedSizeHeight(shaderIdx)), false);
     }
+
+    destinationBox.setEnabled(true);
+    destinationBox.setSelectedId(1, juce::NotificationType::dontSendNotification);
 }
 
 PatchEditor::ShaderListBoxModel::ShaderListBoxModel(juce::TableListBox *box,
