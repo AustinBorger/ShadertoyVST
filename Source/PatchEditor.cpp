@@ -88,6 +88,7 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor,
     destinationBox.addItem("Buffer C", 4);
     destinationBox.addItem("Buffer D", 5);
     destinationBox.setEnabled(false);
+    destinationBox.addListener(this);
 
     addAndMakeVisible(destinationLabel);
     destinationLabel.setText("Destination:", juce::NotificationType::dontSendNotification);
@@ -285,6 +286,14 @@ void PatchEditor::textEditorTextChanged(juce::TextEditor &textEditor)
     }
 }
 
+void PatchEditor::comboBoxChanged(juce::ComboBox *comboBoxThatHasChanged)
+{
+    if (comboBoxThatHasChanged == &destinationBox) {
+        int id = destinationBox.getSelectedId();
+        processor.setShaderDestination(shaderListBoxModel.getSelectedRow(), id);
+    }
+}
+
 void PatchEditor::processorStateChanged()
 {
     visuWidthEditor.setText(std::to_string(processor.getVisualizationWidth()), false);
@@ -374,7 +383,8 @@ void PatchEditor::loadTopRightRegion(int shaderIdx)
     }
 
     destinationBox.setEnabled(true);
-    destinationBox.setSelectedId(1, juce::NotificationType::dontSendNotification);
+    destinationBox.setSelectedId(processor.getShaderDestination(shaderIdx),
+                                 juce::NotificationType::dontSendNotification);
 }
 
 PatchEditor::ShaderListBoxModel::ShaderListBoxModel(juce::TableListBox *box,

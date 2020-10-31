@@ -24,6 +24,7 @@ class ShadertoyAudioProcessorEditor;
 class PatchEditor  : public juce::Component,
                      public juce::Button::Listener,
                      public juce::TextEditor::Listener,
+                     public juce::ComboBox::Listener,
                      public ShadertoyAudioProcessor::StateListener
 {
 public:
@@ -35,6 +36,7 @@ public:
     void resized() override;
     void buttonClicked(juce::Button *) override;
     void textEditorTextChanged(juce::TextEditor &) override;
+    void comboBoxChanged(juce::ComboBox *comboBoxThatHasChanged) override;
     void processorStateChanged() override;
 
 private:

@@ -297,6 +297,11 @@ void ShadertoyAudioProcessor::setShaderFixedSizeHeight(int idx, int height)
     shaderData[idx].fixedSizeHeight = height;
 }
 
+void ShadertoyAudioProcessor::setShaderDestination(int idx, int destination)
+{
+    shaderData[idx].destination = destination;
+}
+
 void ShadertoyAudioProcessor::reloadShaderFile(int idx)
 {
     juce::File file(shaderData[idx].path);
@@ -326,6 +331,11 @@ int ShadertoyAudioProcessor::getShaderFixedSizeWidth(int idx)
 int ShadertoyAudioProcessor::getShaderFixedSizeHeight(int idx)
 {
     return shaderData[idx].fixedSizeHeight;
+}
+
+int ShadertoyAudioProcessor::getShaderDestination(int idx)
+{
+    return shaderData[idx].destination;
 }
 
 size_t ShadertoyAudioProcessor::getNumShaderFiles()

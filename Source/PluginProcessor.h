@@ -86,12 +86,14 @@ public:
     void setShaderFixedSizeBuffer(int idx, bool fixedSizeBuffer);
     void setShaderFixedSizeWidth(int idx, int width);
     void setShaderFixedSizeHeight(int idx, int height);
+    void setShaderDestination(int idx, int destination);
     void reloadShaderFile(int idx);
     const juce::String &getShaderFile(int idx);
     const juce::String &getShaderString(int idx);
     bool getShaderFixedSizeBuffer(int idx);
     int getShaderFixedSizeWidth(int idx);
-    int getShaderFixedSizeHeight(int idX);
+    int getShaderFixedSizeHeight(int idx);
+    int getShaderDestination(int idx);
     size_t getNumShaderFiles();
     bool hasShaderFiles();
 
@@ -131,6 +133,7 @@ private:
         bool fixedSizeBuffer = false;
         int fixedSizeWidth = 640;
         int fixedSizeHeight = 360;
+        int destination = 1;
     };
 
     void addUniformFloat(const juce::String &name);
