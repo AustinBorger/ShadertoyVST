@@ -74,8 +74,8 @@ private:
     bool loadExtensions();
     bool buildShaderProgram(int idx);
     bool buildCopyProgram();
-    bool createOutputFramebuffer();
-    bool createAuxFramebuffer(int idx);
+    bool createFramebuffer(Framebuffer &fbOut,
+                           int destinationId);
     bool checkIntrinsicUniform(const juce::String &name, GLenum type,
                                GLint size, bool &isIntrinsic, int programIdx);
     void setProgramIntrinsics(int programIdx, double currentAudioTimestamp);

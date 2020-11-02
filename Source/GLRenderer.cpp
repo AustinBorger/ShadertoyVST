@@ -78,7 +78,8 @@ void GLRenderer::newOpenGLContextCreated()
         }
     }
     
-    if (!createOutputFramebuffer()) {
+    // Create the output framebuffer if needed
+    if (!createFramebuffer(mOutputFramebuffer, 1)) {
         goto failure;
     }
 
@@ -615,18 +616,20 @@ bool GLRenderer::buildCopyProgram()
     return true;
 }
 
-bool GLRenderer::createOutputFramebuffer()
+bool GLRenderer::createFramebuffer(Framebuffer &fbOut,
+                                   int destinationId)
 {
     // Figure out if we have to create one and how big it needs to be
     bool shouldCreateBuffer = false;
-    mOutputFramebuffer.width = 640;
-    mOutputFramebuffer.height = 360;
-    
+    fbOut.width = 640;
+    fbOut.height = 360;
+
     for (int i = 0; i < processor.getNumShaderFiles(); i++) {
-        if (processor.getShaderDestination(i) == 1 && processor.getShaderFixedSizeBuffer(i)) {
+        if (processor.getShaderDestination(i) == destinationId &&
+            processor.getShaderFixedSizeBuffer(i)) {
             shouldCreateBuffer = true;
-            mOutputFramebuffer.width = max(mOutputFramebuffer.width, processor.getShaderFixedSizeWidth(i));
-            mOutputFramebuffer.height = max(mOutputFramebuffer.height, processor.getShaderFixedSizeHeight(i));
+            fbOut.width = max(fbOut.width, processor.getShaderFixedSizeWidth(i));
+            fbOut.height = max(fbOut.height, processor.getShaderFixedSizeHeight(i));
         }
     }
     
@@ -634,57 +637,16 @@ bool GLRenderer::createOutputFramebuffer()
         return true;
     }
     
-    glContext.extensions.glGenFramebuffers(1, &mOutputFramebuffer.framebufferObj);
-    glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mOutputFramebuffer.framebufferObj);
-    glGenTextures(1, &mOutputFramebuffer.textureObj);
-    glBindTexture(GL_TEXTURE_2D, mOutputFramebuffer.textureObj);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mOutputFramebuffer.width, mOutputFramebuffer.height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glContext.extensions.glGenFramebuffers(1, &fbOut.framebufferObj);
+    glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, fbOut.framebufferObj);
+    glGenTextures(1, &fbOut.textureObj);
+    glBindTexture(GL_TEXTURE_2D, fbOut.textureObj);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fbOut.width, fbOut.height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glContext.extensions.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                                                mOutputFramebuffer.textureObj, 0);
-    
-    GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
-    glDrawBuffers(1, drawBuffers);
-    
-    if (glContext.extensions.glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        alertError("Unable to construct framebuffer", "Failed to construct the framebuffer");
-        return false;
-    }
-
-    return true;
-}
-
-bool GLRenderer::createAuxFramebuffer(int idx)
-{
-    bool shouldCreateBuffer = false;
-    mAuxFramebuffers[idx].width = 640;
-    mAuxFramebuffers[idx].height = 360;
-
-    for (int i = 0; i < processor.getNumShaderFiles(); i++) {
-        if (processor.getShaderDestination(i) == 2 + idx && processor.getShaderFixedSizeBuffer(i)) {
-            shouldCreateBuffer = true;
-            mAuxFramebuffers[idx].width = max(mAuxFramebuffers[idx].width, processor.getShaderFixedSizeWidth(i));
-            mAuxFramebuffers[idx].height = max(mAuxFramebuffers[idx].height, processor.getShaderFixedSizeHeight(i));
-        }
-    }
-
-    if (!shouldCreateBuffer) {
-        return true;
-    }
-
-    glContext.extensions.glGenFramebuffers(1, &mAuxFramebuffers[idx].framebufferObj);
-    glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mAuxFramebuffers[idx].framebufferObj);
-    glGenTextures(1, &mAuxFramebuffers[idx].textureObj);
-    glBindTexture(GL_TEXTURE_2D, mAuxFramebuffers[idx].textureObj);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mAuxFramebuffers[idx].width, mAuxFramebuffers[idx].height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glContext.extensions.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                                                mAuxFramebuffers[idx].textureObj, 0);
-    
-    GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
-    glDrawBuffers(1, drawBuffers);
+                                                fbOut.textureObj, 0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
     
     if (glContext.extensions.glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         alertError("Unable to construct framebuffer", "Failed to construct the framebuffer");
