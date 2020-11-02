@@ -82,19 +82,21 @@ void GLRenderer::newOpenGLContextCreated()
         goto failure;
     }
 
-    firstRender = 0.0;
-    prevRender = 0.0;
+    firstRender = -1.0;
+    prevRender = -1.0;
     firstAudioTimestamp = -1.0;
-
-#if GLRENDER_LOG_FPS == 1
-    avgFPS = 0.0;
-    lastFPSLog = 0.0;
-#endif
+    lastAudioTimestamp = -1.0;
+    cacheLastAudioTimestamp = -1.0;
 
     for (int i = 0; i < MIDI_NUM_KEYS; i++) {
         keyDownLast[i] = -1.0f;
         keyUpLast[i] = -1.0f;
     }
+
+#if GLRENDER_LOG_FPS == 1
+    avgFPS = 0.0;
+    lastFPSLog = 0.0;
+#endif
 
     processor.addAudioListener(this);
     
@@ -120,8 +122,78 @@ void GLRenderer::openGLContextClosing()
 
     audioChannel0 = nullptr;
     sizeAudioChannel0 = 0;
+    maxSizeAudioChannel0 = 0;
     audioChannel1 = nullptr;
     sizeAudioChannel1 = 0;
+    maxSizeAudioChannel0 = 0;
+
+    cacheAudioChannel0 = nullptr;
+    cacheSizeAudioChannel0 = 0;
+    cacheAudioChannel1 = nullptr;
+    cacheSizeAudioChannel1 = 0;
+}
+
+void GLRenderer::setProgramIntrinsics(int programIdx,
+                                      double currentAudioTimestamp)
+{
+    ProgramData &program = programData[programIdx];
+
+    /*
+     * Calculate the difference between simulated audio time and the
+     * audio timestamp last provided by handleAudioFrame. Use this to
+     * advance the audio buffer given to the shader at a constant rate.
+     * If this is not done, there will be variable jumps in audio because
+     * handleAudioFrame is called at unpredictable time intervals.
+     */
+    double audioTimeDiff = currentAudioTimestamp - cacheLastAudioTimestamp;
+    int samplePos = max(0, min(int(mSampleRate * (audioTimeDiff + DELAY_LATENCY)),
+                               int(mSampleRate * DELAY_LATENCY)));
+
+    if (program.audioChannel0 != nullptr && cacheAudioChannel0 != nullptr) {
+        GLint sizeDiff = maxSizeAudioChannel0 - program.sizeAudioChannel0;
+        program.audioChannel0->set(cacheAudioChannel0.get() + sizeDiff + samplePos,
+                                   program.sizeAudioChannel0);
+    }
+
+    if (program.audioChannel1 != nullptr && cacheAudioChannel1 != nullptr) {
+        GLint sizeDiff = maxSizeAudioChannel1 - program.sizeAudioChannel1;
+        program.audioChannel1->set(cacheAudioChannel1.get() + sizeDiff + samplePos,
+                                   program.sizeAudioChannel1);
+    }
+
+    if (program.sampleRateIntrinsic != nullptr) {
+        program.sampleRateIntrinsic->set((GLfloat)mSampleRate);
+    }
+
+    for (int i = 0; i < program.uniformFloats.size(); i++) {
+        float val = processor.getUniformFloat(i);
+        program.uniformFloats[i]->set(val);
+    }
+
+    for (int i = 0; i < program.uniformInts.size(); i++) {
+        int val = processor.getUniformInt(i);
+        program.uniformInts[i]->set(val);
+    }
+
+    if (program.keyDownIntrinsic != nullptr) {
+        GLfloat vals[MIDI_NUM_KEYS] = { };
+        for (int i = 0; i < MIDI_NUM_KEYS; i++) {
+            vals[i] = (GLfloat)keyDownLast[i];
+        }
+        program.keyDownIntrinsic->set(vals, MIDI_NUM_KEYS);
+    }
+
+    if (program.keyUpIntrinsic != nullptr) {
+        GLfloat vals[MIDI_NUM_KEYS] = { };
+        for (int i = 0; i < MIDI_NUM_KEYS; i++) {
+            vals[i] = (GLfloat)keyUpLast[i];
+        }
+        program.keyUpIntrinsic->set(vals, MIDI_NUM_KEYS);
+    }
+
+    if (program.timeIntrinsic != nullptr) {
+        program.timeIntrinsic->set((GLfloat)currentAudioTimestamp);
+    }
 }
 
 void GLRenderer::renderOpenGL()
@@ -134,19 +206,15 @@ void GLRenderer::renderOpenGL()
         int programIdx = processor.getOutputProgramIdx();
         int backBufferWidth = (int)(getWidth() * scaleFactor);
         int backBufferHeight = (int)(getHeight() * scaleFactor);
-        double now = juce::Time::getMillisecondCounterHiRes();
-        double elapsedSeconds;
-        double currentAudioTimestamp = 0.0;
-        double sampleRate = 44100.0;
+        double now = juce::Time::getMillisecondCounterHiRes() / 1000.0;
+        double elapsedSeconds = -1.0;
+        double currentAudioTimestamp = -1.0;
 
-        if (firstRender < 0.001) {
-            firstRender = now;
-        }
-        elapsedSeconds = (now - firstRender) / 1000.0;
+        mutex.enter();
 
 #if GLRENDER_LOG_FPS == 1
-        if (prevRender > 0.0) {
-            double instFPS = 1000.0 / (now - prevRender);
+        if (prevRender >= 0.0) {
+            double instFPS = 1.0 / (now - prevRender);
             if (avgFPS > 0.0) {
                 const double a = 0.96;
                 avgFPS = avgFPS * a + instFPS * (1.0 - a);
@@ -156,18 +224,22 @@ void GLRenderer::renderOpenGL()
         }
 
         if (avgFPS > 0.0) {
-            if (now - lastFPSLog > 1000.0) {
+            if (now - lastFPSLog > 1.0) {
                 editor.logDebugMessage("FPS: " + std::to_string(avgFPS));
                 lastFPSLog = now;
             }
         }
 #endif
 
-        mutex.enter();
+        if (firstRender < 0) {
+            firstRender = now;
+        }
+        elapsedSeconds = now - firstRender;
 
         if (firstAudioTimestamp >= 0.0) {
-            currentAudioTimestamp = firstAudioTimestamp + elapsedSeconds - DELAY_LATENCY;
-            sampleRate = mSampleRate;
+            currentAudioTimestamp = min(lastAudioTimestamp,
+                                        max(firstAudioTimestamp - DELAY_LATENCY + elapsedSeconds,
+                                            lastAudioTimestamp - DELAY_LATENCY));
             while (!midiFrames.empty() && midiFrames.front().timestamp <= currentAudioTimestamp) {
                 MidiFrame &midiFrame = midiFrames.front();
                 for (auto metadata : midiFrame.buffer) {
@@ -181,58 +253,43 @@ void GLRenderer::renderOpenGL()
                 midiFrames.pop();
             }
         }
+
+        if (cacheSizeAudioChannel0 != sizeAudioChannel0) {
+            cacheAudioChannel0 = nullptr;
+            if (sizeAudioChannel0 > 0) {
+                cacheAudioChannel0 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel0]));
+            }
+            cacheSizeAudioChannel0 = sizeAudioChannel0;
+        }
+
+        if (cacheSizeAudioChannel1 != sizeAudioChannel1) {
+            cacheAudioChannel1 = nullptr;
+            if (sizeAudioChannel1 > 0) {
+                cacheAudioChannel1 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel1]));
+            }
+            cacheSizeAudioChannel1 = sizeAudioChannel1;
+        }
+
+        if (audioChannel0 != nullptr && cacheAudioChannel0 != nullptr) {
+            memcpy(cacheAudioChannel0.get(), audioChannel0.get(),
+                   sizeof(float) * sizeAudioChannel0);
+        }
+
+        if (audioChannel1 != nullptr && cacheAudioChannel1 != nullptr) {
+            memcpy(cacheAudioChannel1.get(), audioChannel1.get(),
+                   sizeof(float) * sizeAudioChannel1);
+        }
+
+        cacheLastAudioTimestamp = lastAudioTimestamp;
+
+        mutex.exit();
         
-        if (programIdx < programData.size()) {
+        if (programIdx < programData.size() &&
+            processor.getShaderDestination(programIdx) == 1) {
             ProgramData &program = programData[programIdx];
             program.program->use();
 
-            if (program.audioChannel0 != nullptr && audioChannel0 != nullptr) {
-                GLint sizeDiff = this->sizeAudioChannel0 - program.sizeAudioChannel0;
-                program.audioChannel0->set(this->audioChannel0.get() + sizeDiff - (GLint)(sampleRate * DELAY_LATENCY),
-                                           program.sizeAudioChannel0);
-            }
-
-            if (program.audioChannel1 != nullptr && audioChannel1 != nullptr) {
-                GLint sizeDiff = this->sizeAudioChannel1 - program.sizeAudioChannel1;
-                program.audioChannel1->set(this->audioChannel1.get() + sizeDiff - (GLint)(sampleRate * DELAY_LATENCY),
-                                           program.sizeAudioChannel1);
-            }
-
-            mutex.exit();
-        
-            for (int i = 0; i < program.uniformFloats.size(); i++) {
-                float val = processor.getUniformFloat(i);
-                program.uniformFloats[i]->set(val);
-            }
-        
-            for (int i = 0; i < program.uniformInts.size(); i++) {
-                int val = processor.getUniformInt(i);
-                program.uniformInts[i]->set(val);
-            }
-
-            if (program.keyDownIntrinsic != nullptr) {
-                GLfloat vals[MIDI_NUM_KEYS] = { };
-                for (int i = 0; i < MIDI_NUM_KEYS; i++) {
-                    vals[i] = (GLfloat)keyDownLast[i];
-                }
-                program.keyDownIntrinsic->set(vals, MIDI_NUM_KEYS);
-            }
-
-            if (program.keyUpIntrinsic != nullptr) {
-                GLfloat vals[MIDI_NUM_KEYS] = { };
-                for (int i = 0; i < MIDI_NUM_KEYS; i++) {
-                    vals[i] = (GLfloat)keyUpLast[i];
-                }
-                program.keyUpIntrinsic->set(vals, MIDI_NUM_KEYS);
-            }
-
-            if (program.timeIntrinsic != nullptr) {
-                program.timeIntrinsic->set((GLfloat)currentAudioTimestamp);
-            }
-
-            if (program.sampleRateIntrinsic != nullptr) {
-                program.sampleRateIntrinsic->set((GLfloat)sampleRate);
-            }
+            setProgramIntrinsics(programIdx, currentAudioTimestamp);
             
             if (processor.getShaderFixedSizeBuffer(programIdx)) {
                 int framebufferWidth = processor.getShaderFixedSizeWidth(programIdx);
@@ -320,24 +377,20 @@ void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
 {
     mutex.enter();
 
-    midiFrames.emplace();
-    midiFrames.back().timestamp = timestamp;
-    for (auto metadata : midiBuffer) {
-        const juce::MidiMessage &message = metadata.getMessage();
-        midiFrames.back().buffer.addEvent(message, 0);
-    }
-
-    if (firstAudioTimestamp < 0.0) {
+    if (firstAudioTimestamp < 0.0 || mSampleRate != sampleRate) {
         firstAudioTimestamp = timestamp;
+        firstRender = -1.0;
+        prevRender = -1.0;
+        midiFrames = { };
 
-        if (sizeAudioChannel0 > 0) {
-            sizeAudioChannel0 += (GLint)(sampleRate * DELAY_LATENCY);
+        if (maxSizeAudioChannel0 > 0) {
+            sizeAudioChannel0 = maxSizeAudioChannel0 + (GLint)(sampleRate * DELAY_LATENCY);
             audioChannel0 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel0]));
             memset(audioChannel0.get(), 0, sizeAudioChannel0 * sizeof(float));
         }
 
-        if (sizeAudioChannel1 > 0) {
-            sizeAudioChannel1 += (GLint)(sampleRate * DELAY_LATENCY);
+        if (maxSizeAudioChannel1 > 0) {
+            sizeAudioChannel1 = maxSizeAudioChannel1 + (GLint)(sampleRate * DELAY_LATENCY);
             audioChannel1 = std::move(std::unique_ptr<float[]>(new float[sizeAudioChannel1]));
             memset(audioChannel1.get(), 0, sizeAudioChannel1 * sizeof(float));
         }
@@ -355,7 +408,15 @@ void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
                            buffer.getNumSamples());
     }
 
+    midiFrames.emplace();
+    midiFrames.back().timestamp = timestamp;
+    for (auto metadata : midiBuffer) {
+        const juce::MidiMessage &message = metadata.getMessage();
+        midiFrames.back().buffer.addEvent(message, 0);
+    }
+
     mSampleRate = sampleRate;
+    lastAudioTimestamp = timestamp;
 
     mutex.exit();
 }
@@ -424,10 +485,10 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
 
             if (name == "iAudioChannel0[0]") {
                 program.sizeAudioChannel0 = size;
-                this->sizeAudioChannel0 = max(this->sizeAudioChannel0, program.sizeAudioChannel0);
+                maxSizeAudioChannel0 = max(maxSizeAudioChannel0, size);
             } else if (name == "iAudioChannel1[0]") {
                 program.sizeAudioChannel1 = size;
-                this->sizeAudioChannel1 = max(this->sizeAudioChannel1, program.sizeAudioChannel1);
+                maxSizeAudioChannel1 = max(maxSizeAudioChannel1, size);
             }
 
             isIntrinsic = true;

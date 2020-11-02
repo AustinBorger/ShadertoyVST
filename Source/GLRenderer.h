@@ -70,6 +70,7 @@ private:
     bool createFramebuffer();
     bool checkIntrinsicUniform(const juce::String &name, GLenum type,
                                GLint size, bool &isIntrinsic, int programIdx);
+    void setProgramIntrinsics(int programIdx, double currentAudioTimestamp);
     void alertError(const juce::String &title, const juce::String &message);
 
     /*
@@ -101,19 +102,33 @@ private:
     GLuint mRenderTexture = 0;
     int mFramebufferWidth = 640;
     int mFramebufferHeight = 360;
+    double mSampleRate = 44100.0;
+
+    // Time stuff
+    double firstRender = -1.0;
+    double prevRender = -1.0;
+    double firstAudioTimestamp = -1.0;
+    double lastAudioTimestamp = -1.0;
     double keyDownLast[MIDI_NUM_KEYS] = { };
     double keyUpLast[MIDI_NUM_KEYS] = { };
-    double firstRender = 0.0;
-    double prevRender = 0.0;
-    double firstAudioTimestamp = -1.0;
-    double mSampleRate = 44100.0;
   
     std::unique_ptr<float[]> audioChannel0;
+    GLint maxSizeAudioChannel0 = 0;
     GLint sizeAudioChannel0 = 0;
     std::unique_ptr<float[]> audioChannel1;
+    GLint maxSizeAudioChannel1 = 0;
     GLint sizeAudioChannel1 = 0;
 
     std::queue<MidiFrame> midiFrames;
+
+    /*
+     * Cached audio data/metadata for the render thread
+     */
+    std::unique_ptr<float[]> cacheAudioChannel0;
+    GLint cacheSizeAudioChannel0 = 0;
+    std::unique_ptr<float[]> cacheAudioChannel1;
+    GLint cacheSizeAudioChannel1 = 0;
+    double cacheLastAudioTimestamp = -1.0;
 
 #if GLRENDER_LOG_FPS == 1
     double avgFPS = 0.0;
