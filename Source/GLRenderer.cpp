@@ -83,6 +83,13 @@ void GLRenderer::newOpenGLContextCreated()
         goto failure;
     }
 
+    // Create the aux framebuffers if needed
+    for (int i = 0; i < 4; i++) {
+        if (!createFramebuffer(mAuxFramebuffers[i], 2 + i)) {
+            goto failure;
+        }
+    }
+
     firstRender = -1.0;
     prevRender = -1.0;
     firstAudioTimestamp = -1.0;
