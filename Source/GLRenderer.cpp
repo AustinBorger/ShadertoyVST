@@ -303,8 +303,8 @@ void GLRenderer::renderOpenGL()
                 /*
                  * First draw to fixed-size framebuffer
                  */
-                glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-                glBindTexture(GL_TEXTURE_2D, mRenderTexture);
+                glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mOutputFramebuffer);
+                glBindTexture(GL_TEXTURE_2D, mOutputRenderTexture);
                 glViewport(0, 0, framebufferWidth, framebufferHeight);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
         
@@ -313,8 +313,8 @@ void GLRenderer::renderOpenGL()
                  */
                 copyProgram.use();
 
-                widthRatio->set((float)mFramebufferWidth / (float)framebufferWidth);
-                heightRatio->set((float)mFramebufferHeight / (float)framebufferHeight);
+                widthRatio->set((float)mOutputFramebufferWidth / (float)framebufferWidth);
+                heightRatio->set((float)mOutputFramebufferHeight / (float)framebufferHeight);
                 
                 glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
                 glViewport(0, 0, backBufferWidth, backBufferHeight);
@@ -619,14 +619,14 @@ bool GLRenderer::createFramebuffer()
 {
     // Figure out if we have to create one and how big it needs to be
     bool shouldCreateBuffer = false;
-    mFramebufferWidth = 640;
-    mFramebufferHeight = 360;
+    mOutputFramebufferWidth = 640;
+    mOutputFramebufferHeight = 360;
     
     for (int i = 0; i < processor.getNumShaderFiles(); i++) {
         shouldCreateBuffer = shouldCreateBuffer || processor.getShaderFixedSizeBuffer(i);
         if (processor.getShaderFixedSizeBuffer(i)) {
-            mFramebufferWidth = max(mFramebufferWidth, processor.getShaderFixedSizeWidth(i));
-            mFramebufferHeight = max(mFramebufferHeight, processor.getShaderFixedSizeHeight(i));
+            mOutputFramebufferWidth = max(mOutputFramebufferWidth, processor.getShaderFixedSizeWidth(i));
+            mOutputFramebufferHeight = max(mOutputFramebufferHeight, processor.getShaderFixedSizeHeight(i));
         }
     }
     
@@ -634,14 +634,14 @@ bool GLRenderer::createFramebuffer()
         return true;
     }
     
-    glContext.extensions.glGenFramebuffers(1, &mFramebuffer);
-    glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
-    glGenTextures(1, &mRenderTexture);
-    glBindTexture(GL_TEXTURE_2D, mRenderTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mFramebufferWidth, mFramebufferHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glContext.extensions.glGenFramebuffers(1, &mOutputFramebuffer);
+    glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mOutputFramebuffer);
+    glGenTextures(1, &mOutputRenderTexture);
+    glBindTexture(GL_TEXTURE_2D, mOutputRenderTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mOutputFramebufferWidth, mOutputFramebufferHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glContext.extensions.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mRenderTexture, 0);
+    glContext.extensions.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mOutputRenderTexture, 0);
     
     GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1, drawBuffers);

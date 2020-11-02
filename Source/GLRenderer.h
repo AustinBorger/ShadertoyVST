@@ -98,10 +98,10 @@ private:
     std::unique_ptr<juce::OpenGLShaderProgram::Uniform> heightRatio;
 
     bool validState = true;
-    GLuint mFramebuffer = 0;
-    GLuint mRenderTexture = 0;
-    int mFramebufferWidth = 640;
-    int mFramebufferHeight = 360;
+    GLuint mOutputFramebuffer = 0;
+    GLuint mOutputRenderTexture = 0;
+    int mOutputFramebufferWidth = 640;
+    int mOutputFramebufferHeight = 360;
     double mSampleRate = 44100.0;
 
     // Time stuff
