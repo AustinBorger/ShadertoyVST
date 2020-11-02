@@ -59,7 +59,8 @@ GLRenderer::~GLRenderer()
     glContext.detach();
 }
 
-void GLRenderer::newOpenGLContextCreated()
+void
+GLRenderer::newOpenGLContextCreated()
 {
     if (!loadExtensions()) {
 	    goto failure;
@@ -115,7 +116,8 @@ failure:
     validState = false;
 }
 
-void GLRenderer::openGLContextClosing()
+void
+GLRenderer::openGLContextClosing()
 {
     processor.removeAudioListener(this);
 
@@ -141,8 +143,9 @@ void GLRenderer::openGLContextClosing()
     cacheSizeAudioChannel1 = 0;
 }
 
-void GLRenderer::setProgramIntrinsics(int programIdx,
-                                      double currentAudioTimestamp)
+void
+GLRenderer::setProgramIntrinsics(int programIdx,
+                                 double currentAudioTimestamp)
 {
     ProgramData &program = programData[programIdx];
 
@@ -204,7 +207,8 @@ void GLRenderer::setProgramIntrinsics(int programIdx,
     }
 }
 
-void GLRenderer::renderOpenGL()
+void
+GLRenderer::renderOpenGL()
 {
     jassert(juce::OpenGLHelpers::isContextActive());
     juce::OpenGLHelpers::clear(juce::Colours::black);
@@ -359,10 +363,11 @@ void GLRenderer::renderOpenGL()
  * AdvanceAudioBuffer
  *    Updates the audio buffer with more current samples.
  */
-static void AdvanceAudioBuffer(float *dst,       // The history buffer
-                               int dstSize,      // The size of the history buffer
-                               const float *src, // The buffer filled with new samples
-                               int srcSize)      // The number of new samples
+static void
+AdvanceAudioBuffer(float *dst,       // The history buffer
+                   int dstSize,      // The size of the history buffer
+                   const float *src, // The buffer filled with new samples
+                   int srcSize)      // The number of new samples
 {
     int numSamplesReused = max(0, dstSize - srcSize);
     int numSamplesCopied = dstSize - numSamplesReused;
@@ -378,9 +383,11 @@ static void AdvanceAudioBuffer(float *dst,       // The history buffer
  * GLRenderer::handleAudioFrame
  *    Handles incoming audio samples / midi events.
  */
-void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
-                                  juce::AudioBuffer<float>& buffer,
-                                  juce::MidiBuffer &midiBuffer)
+void
+GLRenderer::handleAudioFrame(double timestamp,
+                             double sampleRate,
+                             juce::AudioBuffer<float>& buffer,
+                             juce::MidiBuffer &midiBuffer)
 {
     mutex.enter();
 
@@ -428,12 +435,14 @@ void GLRenderer::handleAudioFrame(double timestamp, double sampleRate,
     mutex.exit();
 }
 
-void GLRenderer::resized()
+void
+GLRenderer::resized()
 {
     // Empty
 }
 
-bool GLRenderer::loadExtensions()
+bool
+GLRenderer::loadExtensions()
 {
     const juce::String errorTitle = "Insufficient OpenGL version";
 
@@ -454,11 +463,12 @@ bool GLRenderer::loadExtensions()
 	return true;
 }
 
-bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
-                                       GLenum type,
-                                       GLint size,
-                                       bool &isIntrinsic,
-                                       int programIdx)
+bool
+GLRenderer::checkIntrinsicUniform(const juce::String &name,
+                                  GLenum type,
+                                  GLint size,
+                                  bool &isIntrinsic,
+                                  int programIdx)
 {
     ProgramData &program = programData[programIdx];
     isIntrinsic = false;
@@ -515,7 +525,8 @@ failure:
     return false;
 }
 
-bool GLRenderer::buildShaderProgram(int idx)
+bool
+GLRenderer::buildShaderProgram(int idx)
 {
     ProgramData &program = programData[idx];
 
@@ -572,7 +583,8 @@ bool GLRenderer::buildShaderProgram(int idx)
 	return true;
 }
 
-bool GLRenderer::buildCopyProgram()
+bool
+GLRenderer::buildCopyProgram()
 {
     bool shouldBuildCopyProgram = false;
     
@@ -626,8 +638,9 @@ bool GLRenderer::buildCopyProgram()
     return true;
 }
 
-bool GLRenderer::createFramebuffer(Framebuffer &fbOut,
-                                   int destinationId)
+bool
+GLRenderer::createFramebuffer(Framebuffer &fbOut,
+                              int destinationId)
 {
     // Figure out if we have to create one and how big it needs to be
     bool shouldCreateBuffer = false;
@@ -666,8 +679,19 @@ bool GLRenderer::createFramebuffer(Framebuffer &fbOut,
     return true;
 }
 
-void GLRenderer::alertError(const juce::String &title,
-                            const juce::String &message)
+GLRenderer::Framebuffer &
+GLRenderer::destinationToFramebuffer(int destinationId)
+{
+    if (destinationId == 1) {
+        return mOutputFramebuffer;
+    } else {
+        return mAuxFramebuffers[destinationId - 2];
+    }
+}
+
+void
+GLRenderer::alertError(const juce::String &title,
+                       const juce::String &message)
 {
     juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
 	                                       title, message);

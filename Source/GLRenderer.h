@@ -80,6 +80,7 @@ private:
     bool checkIntrinsicUniform(const juce::String &name, GLenum type,
                                GLint size, bool &isIntrinsic, int programIdx);
     void setProgramIntrinsics(int programIdx, double currentAudioTimestamp);
+    Framebuffer &destinationToFramebuffer(int destinationId);
     void alertError(const juce::String &title, const juce::String &message);
 
     /*
