@@ -48,7 +48,8 @@ private:
         std::unique_ptr<juce::OpenGLShaderProgram> program;
         std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformFloats;
         std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformInts;
-        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> resolutionIntrinsic;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> outputResolutionIntrinsic;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> auxResolutionIntrinsic[4];
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyDownIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyUpIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> timeIntrinsic;

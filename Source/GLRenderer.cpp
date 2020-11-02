@@ -211,7 +211,6 @@ void GLRenderer::renderOpenGL()
 
     if (validState) {
         double scaleFactor = glContext.getRenderingScale(); // DPI scaling
-        int programIdx = processor.getOutputProgramIdx();
         int backBufferWidth = (int)(getWidth() * scaleFactor);
         int backBufferHeight = (int)(getHeight() * scaleFactor);
         double now = juce::Time::getMillisecondCounterHiRes() / 1000.0;
@@ -292,20 +291,20 @@ void GLRenderer::renderOpenGL()
 
         mutex.exit();
         
-        if (programIdx < programData.size() &&
-            processor.getShaderDestination(programIdx) == 1) {
-            ProgramData &program = programData[programIdx];
+        if (processor.getOutputProgramIdx() < programData.size() &&
+            processor.getShaderDestination(processor.getOutputProgramIdx()) == 1) {
+            ProgramData &program = programData[processor.getOutputProgramIdx()];
             program.program->use();
 
-            setProgramIntrinsics(programIdx, currentAudioTimestamp);
+            setProgramIntrinsics(processor.getOutputProgramIdx(), currentAudioTimestamp);
             
-            if (processor.getShaderFixedSizeBuffer(programIdx)) {
-                int framebufferWidth = processor.getShaderFixedSizeWidth(programIdx);
-                int framebufferHeight = processor.getShaderFixedSizeHeight(programIdx);
+            if (processor.getShaderFixedSizeBuffer(processor.getOutputProgramIdx())) {
+                int framebufferWidth = processor.getShaderFixedSizeWidth(processor.getOutputProgramIdx());
+                int framebufferHeight = processor.getShaderFixedSizeHeight(processor.getOutputProgramIdx());
 
-                if (program.resolutionIntrinsic != nullptr) {
-                    program.resolutionIntrinsic->set((GLfloat)framebufferWidth,
-                                                     (GLfloat)framebufferHeight);
+                if (program.outputResolutionIntrinsic != nullptr) {
+                    program.outputResolutionIntrinsic->set((GLfloat)framebufferWidth,
+                                                           (GLfloat)framebufferHeight);
                 }
 
                 /*
@@ -328,9 +327,9 @@ void GLRenderer::renderOpenGL()
                 glViewport(0, 0, backBufferWidth, backBufferHeight);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
             } else {
-                if (program.resolutionIntrinsic != nullptr) {
-                    program.resolutionIntrinsic->set((GLfloat)backBufferWidth,
-                                                     (GLfloat)backBufferHeight);
+                if (program.outputResolutionIntrinsic != nullptr) {
+                    program.outputResolutionIntrinsic->set((GLfloat)backBufferWidth,
+                                                           (GLfloat)backBufferHeight);
                 }
 
                 /*
@@ -473,7 +472,11 @@ bool GLRenderer::checkIntrinsicUniform(const juce::String &name,
     };
 
     const Intrinsic intrinsics[] = {
-        { "iResolution", GL_FLOAT_VEC2, 1, 1, program.resolutionIntrinsic },
+        { "iResolution", GL_FLOAT_VEC2, 1, 1, program.outputResolutionIntrinsic },
+        { "iResolutionBufferA", GL_FLOAT_VEC2, 1, 1, program.auxResolutionIntrinsic[0] },
+        { "iResolutionBufferB", GL_FLOAT_VEC2, 1, 1, program.auxResolutionIntrinsic[1] },
+        { "iResolutionBufferC", GL_FLOAT_VEC2, 1, 1, program.auxResolutionIntrinsic[2] },
+        { "iResolutionBufferD", GL_FLOAT_VEC2, 1, 1, program.auxResolutionIntrinsic[3] },
         { "iKeyDown[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyDownIntrinsic },
         { "iKeyUp[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyUpIntrinsic },
         { "iTime", GL_FLOAT, 1, 1, program.timeIntrinsic },
