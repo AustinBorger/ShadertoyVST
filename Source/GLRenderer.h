@@ -64,6 +64,13 @@ private:
         double timestamp;
     };
 
+    struct Framebuffer {
+        GLuint framebufferObj = 0;
+        GLuint textureObj = 0;
+        int width = 640;
+        int height = 360;
+    };
+
     bool loadExtensions();
     bool buildShaderProgram(int idx);
     bool buildCopyProgram();
@@ -98,11 +105,9 @@ private:
     std::unique_ptr<juce::OpenGLShaderProgram::Uniform> heightRatio;
 
     bool validState = true;
-    GLuint mOutputFramebuffer = 0;
-    GLuint mOutputRenderTexture = 0;
-    int mOutputFramebufferWidth = 640;
-    int mOutputFramebufferHeight = 360;
     double mSampleRate = 44100.0;
+
+    Framebuffer mOutputFramebuffer;
 
     // Time stuff
     double firstRender = -1.0;
