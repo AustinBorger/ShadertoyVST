@@ -74,7 +74,8 @@ private:
     bool loadExtensions();
     bool buildShaderProgram(int idx);
     bool buildCopyProgram();
-    bool createFramebuffer();
+    bool createOutputFramebuffer();
+    bool createAuxFramebuffer(int idx);
     bool checkIntrinsicUniform(const juce::String &name, GLenum type,
                                GLint size, bool &isIntrinsic, int programIdx);
     void setProgramIntrinsics(int programIdx, double currentAudioTimestamp);
@@ -107,7 +108,8 @@ private:
     bool validState = true;
     double mSampleRate = 44100.0;
 
-    Framebuffer mOutputFramebuffer;
+    Framebuffer mOutputFramebuffer; // Used if the output shader wants a fixed size
+    Framebuffer mAuxFramebuffers[4]; // Buffer A, B, C, D
 
     // Time stuff
     double firstRender = -1.0;
