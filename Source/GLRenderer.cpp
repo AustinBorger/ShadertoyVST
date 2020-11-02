@@ -39,10 +39,9 @@ static const juce::String copyFrag =
     "FragColor = texture(visuTexture, vec2(texCoord.x / widthRatio, texCoord.y / heightRatio));\n"
 "}\n";
 
-//==============================================================================
-GLRenderer::GLRenderer(ShadertoyAudioProcessor& processor,
-                       ShadertoyAudioProcessorEditor &editor,
-                       juce::OpenGLContext &glContext)
+GLRenderer::GLRenderer(ShadertoyAudioProcessor& processor,    // IN / OUT
+                       ShadertoyAudioProcessorEditor &editor, // IN / OUT
+                       juce::OpenGLContext &glContext)        // IN / OUT
  : processor(processor),
    editor(editor),
    glContext(glContext),
@@ -144,8 +143,8 @@ GLRenderer::openGLContextClosing()
 }
 
 void
-GLRenderer::setProgramIntrinsics(int programIdx,
-                                 double currentAudioTimestamp)
+GLRenderer::setProgramIntrinsics(int programIdx,               // IN
+                                 double currentAudioTimestamp) // IN
 {
     ProgramData &program = programData[programIdx];
 
@@ -364,10 +363,10 @@ GLRenderer::renderOpenGL()
  *    Updates the audio buffer with more current samples.
  */
 static void
-AdvanceAudioBuffer(float *dst,       // The history buffer
-                   int dstSize,      // The size of the history buffer
-                   const float *src, // The buffer filled with new samples
-                   int srcSize)      // The number of new samples
+AdvanceAudioBuffer(float *dst,       // OUT: The history buffer
+                   int dstSize,      // IN: The size of the history buffer
+                   const float *src, // IN: The buffer filled with new samples
+                   int srcSize)      // IN: The number of new samples
 {
     int numSamplesReused = max(0, dstSize - srcSize);
     int numSamplesCopied = dstSize - numSamplesReused;
@@ -384,10 +383,10 @@ AdvanceAudioBuffer(float *dst,       // The history buffer
  *    Handles incoming audio samples / midi events.
  */
 void
-GLRenderer::handleAudioFrame(double timestamp,
-                             double sampleRate,
-                             juce::AudioBuffer<float>& buffer,
-                             juce::MidiBuffer &midiBuffer)
+GLRenderer::handleAudioFrame(double timestamp,                 // IN
+                             double sampleRate,                // IN
+                             juce::AudioBuffer<float>& buffer, // IN
+                             juce::MidiBuffer &midiBuffer)     // IN
 {
     mutex.enter();
 
@@ -464,11 +463,11 @@ GLRenderer::loadExtensions()
 }
 
 bool
-GLRenderer::checkIntrinsicUniform(const juce::String &name,
-                                  GLenum type,
-                                  GLint size,
-                                  bool &isIntrinsic,
-                                  int programIdx)
+GLRenderer::checkIntrinsicUniform(const juce::String &name, // IN
+                                  GLenum type,              // IN
+                                  GLint size,               // IN
+                                  bool &isIntrinsic,        // OUT
+                                  int programIdx)           // IN
 {
     ProgramData &program = programData[programIdx];
     isIntrinsic = false;
@@ -526,7 +525,7 @@ failure:
 }
 
 bool
-GLRenderer::buildShaderProgram(int idx)
+GLRenderer::buildShaderProgram(int idx) // IN
 {
     ProgramData &program = programData[idx];
 
@@ -639,8 +638,8 @@ GLRenderer::buildCopyProgram()
 }
 
 bool
-GLRenderer::createFramebuffer(Framebuffer &fbOut,
-                              int destinationId)
+GLRenderer::createFramebuffer(Framebuffer &fbOut, // OUT
+                              int destinationId)  // IN
 {
     // Figure out if we have to create one and how big it needs to be
     bool shouldCreateBuffer = false;
@@ -680,7 +679,7 @@ GLRenderer::createFramebuffer(Framebuffer &fbOut,
 }
 
 GLRenderer::Framebuffer &
-GLRenderer::destinationToFramebuffer(int destinationId)
+GLRenderer::destinationToFramebuffer(int destinationId) // IN
 {
     if (destinationId == 1) {
         return mOutputFramebuffer;
@@ -690,8 +689,8 @@ GLRenderer::destinationToFramebuffer(int destinationId)
 }
 
 void
-GLRenderer::alertError(const juce::String &title,
-                       const juce::String &message)
+GLRenderer::alertError(const juce::String &title,   // IN
+                       const juce::String &message) // IN
 {
     juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
 	                                       title, message);
