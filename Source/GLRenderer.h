@@ -79,7 +79,10 @@ private:
                            int destinationId);
     bool checkIntrinsicUniform(const juce::String &name, GLenum type,
                                GLint size, bool &isIntrinsic, int programIdx);
-    void setProgramIntrinsics(int programIdx, double currentAudioTimestamp);
+    void setProgramIntrinsics(int programIdx,
+                              double currentAudioTimestamp,
+                              int backbufferWidth,
+                              int backbufferHeight);
     Framebuffer &destinationToFramebuffer(int destinationId);
     void alertError(const juce::String &title, const juce::String &message);
 

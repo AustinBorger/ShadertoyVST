@@ -144,7 +144,9 @@ GLRenderer::openGLContextClosing()
 
 void
 GLRenderer::setProgramIntrinsics(int programIdx,               // IN
-                                 double currentAudioTimestamp) // IN
+                                 double currentAudioTimestamp, // IN
+                                 int backBufferWidth,          // IN
+                                 int backBufferHeight)         // IN
 {
     ProgramData &program = programData[programIdx];
 
@@ -203,6 +205,23 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
 
     if (program.timeIntrinsic != nullptr) {
         program.timeIntrinsic->set((GLfloat)currentAudioTimestamp);
+    }
+
+    int programFbWidth = processor.getShaderFixedSizeWidth(programIdx);
+    int programFbHeight = processor.getShaderFixedSizeHeight(programIdx);
+    if (processor.getShaderFixedSizeBuffer(programIdx)) {
+        // If destinationId == 1, use the above fbWidth / fbHeight to set iResolution
+        if (processor.getShaderDestination(programIdx) == 1) {
+            if (program.outputResolutionIntrinsic != nullptr) {
+                program.outputResolutionIntrinsic->set((GLfloat)programFbWidth,
+                                                       (GLfloat)programFbHeight);
+            }
+        }
+    } else {
+        if (program.outputResolutionIntrinsic != nullptr) {
+            program.outputResolutionIntrinsic->set((GLfloat)backBufferWidth,
+                                                   (GLfloat)backBufferHeight);
+        }
     }
 }
 
@@ -299,16 +318,12 @@ GLRenderer::renderOpenGL()
             ProgramData &program = programData[processor.getOutputProgramIdx()];
             program.program->use();
 
-            setProgramIntrinsics(processor.getOutputProgramIdx(), currentAudioTimestamp);
+            setProgramIntrinsics(processor.getOutputProgramIdx(), currentAudioTimestamp,
+                                 backBufferWidth, backBufferHeight);
             
             if (processor.getShaderFixedSizeBuffer(processor.getOutputProgramIdx())) {
                 int framebufferWidth = processor.getShaderFixedSizeWidth(processor.getOutputProgramIdx());
                 int framebufferHeight = processor.getShaderFixedSizeHeight(processor.getOutputProgramIdx());
-
-                if (program.outputResolutionIntrinsic != nullptr) {
-                    program.outputResolutionIntrinsic->set((GLfloat)framebufferWidth,
-                                                           (GLfloat)framebufferHeight);
-                }
 
                 /*
                  * First draw to fixed-size framebuffer
@@ -330,11 +345,6 @@ GLRenderer::renderOpenGL()
                 glViewport(0, 0, backBufferWidth, backBufferHeight);
                 glDrawArrays(GL_TRIANGLES, 0, 3);
             } else {
-                if (program.outputResolutionIntrinsic != nullptr) {
-                    program.outputResolutionIntrinsic->set((GLfloat)backBufferWidth,
-                                                           (GLfloat)backBufferHeight);
-                }
-
                 /*
                  * Draw directly to back buffer
                  */
