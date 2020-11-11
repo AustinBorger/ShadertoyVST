@@ -207,20 +207,42 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
         program.timeIntrinsic->set((GLfloat)currentAudioTimestamp);
     }
 
-    int programFbWidth = processor.getShaderFixedSizeWidth(programIdx);
-    int programFbHeight = processor.getShaderFixedSizeHeight(programIdx);
-    if (processor.getShaderFixedSizeBuffer(programIdx)) {
-        // If destinationId == 1, use the above fbWidth / fbHeight to set iResolution
-        if (processor.getShaderDestination(programIdx) == 1) {
-            if (program.outputResolutionIntrinsic != nullptr) {
-                program.outputResolutionIntrinsic->set((GLfloat)programFbWidth,
-                                                       (GLfloat)programFbHeight);
+    int outputFbWidth = 0, outputFbHeight = 0;
+    int auxFbWidth[4] = { }, auxFbHeight[4] = { };
+
+    int outputProgramIdx = processor.getOutputProgramIdx();
+    if (processor.getShaderDestination(outputProgramIdx) == 1) {
+        if (processor.getShaderFixedSizeBuffer(outputProgramIdx)) {
+            outputFbWidth = processor.getShaderFixedSizeWidth(outputProgramIdx);
+            outputFbHeight = processor.getShaderFixedSizeHeight(outputProgramIdx);
+        } else {
+            outputFbWidth = backBufferWidth;
+            outputFbHeight = backBufferHeight;
+        }
+    }
+
+    for (int i = 0; i < 4; i++) {
+        int bufferProgramIdx = processor.getBufferProgramIdx(i);
+        if (processor.getShaderDestination(bufferProgramIdx) == i + 2) {
+            if (processor.getShaderFixedSizeBuffer(bufferProgramIdx)) {
+                auxFbWidth[i] = processor.getShaderFixedSizeWidth(bufferProgramIdx);
+                auxFbHeight[i] = processor.getShaderFixedSizeHeight(bufferProgramIdx);
+            } else {
+                auxFbWidth[i] = backBufferWidth;
+                auxFbHeight[i] = backBufferHeight;
             }
         }
-    } else {
-        if (program.outputResolutionIntrinsic != nullptr) {
-            program.outputResolutionIntrinsic->set((GLfloat)backBufferWidth,
-                                                   (GLfloat)backBufferHeight);
+    }
+
+    if (program.outputResolutionIntrinsic != nullptr) {
+        program.outputResolutionIntrinsic->set((GLfloat)outputFbWidth,
+                                               (GLfloat)outputFbHeight);
+    }
+
+    for (int i = 0; i < 4; i++) {
+        if (program.auxResolutionIntrinsic[i] != nullptr) {
+            program.auxResolutionIntrinsic[i]->set((GLfloat)auxFbWidth[i],
+                                                   (GLfloat)auxFbHeight[i]);
         }
     }
 }
