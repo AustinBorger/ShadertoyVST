@@ -248,6 +248,92 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
 }
 
 void
+GLRenderer::renderAuxBuffer(int bufferIdx,                // IN
+                            double currentAudioTimestamp, // IN
+                            int backBufferWidth,          // IN
+                            int backBufferHeight)         // IN
+{
+    int programIdx = processor.getBufferProgramIdx(bufferIdx);
+    if (programIdx < programData.size() &&
+        processor.getShaderDestination(programIdx) == 2 + bufferIdx) {
+        ProgramData &program = programData[programIdx];
+        program.program->use();
+
+        setProgramIntrinsics(programIdx, currentAudioTimestamp,
+                             backBufferWidth, backBufferHeight);
+
+        glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mAuxFramebuffers[bufferIdx].framebufferObj);
+        glBindTexture(GL_TEXTURE_2D, mAuxFramebuffers[bufferIdx].textureObj);
+        
+        if (processor.getShaderFixedSizeBuffer(programIdx)) {
+            glViewport(0, 0, processor.getShaderFixedSizeWidth(programIdx),
+                       processor.getShaderFixedSizeHeight(programIdx));
+        } else {
+            glViewport(0, 0, mAuxFramebuffers[bufferIdx].width,
+                       mAuxFramebuffers[bufferIdx].height);
+        }
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+    }
+}
+
+void
+GLRenderer::renderOutputBuffer(double currentAudioTimestamp, // IN
+                               int backBufferWidth,          // IN
+                               int backBufferHeight)         // IN
+{
+    int programIdx = processor.getOutputProgramIdx();
+    if (programIdx < programData.size() &&
+        processor.getShaderDestination(programIdx) == 1) {
+        ProgramData &program = programData[programIdx];
+        program.program->use();
+
+        setProgramIntrinsics(programIdx, currentAudioTimestamp,
+                             backBufferWidth, backBufferHeight);
+        
+        if (processor.getShaderFixedSizeBuffer(programIdx)) {
+            int framebufferWidth = processor.getShaderFixedSizeWidth(programIdx);
+            int framebufferHeight = processor.getShaderFixedSizeHeight(programIdx);
+
+            /*
+             * First draw to fixed-size framebuffer
+             */
+            glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mOutputFramebuffer.framebufferObj);
+            glBindTexture(GL_TEXTURE_2D, mOutputFramebuffer.textureObj);
+            glViewport(0, 0, framebufferWidth, framebufferHeight);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+    
+            /*
+             * Now stretch to the render area
+             */
+            copyProgram.use();
+
+            widthRatio->set((float)mOutputFramebuffer.width / (float)framebufferWidth);
+            heightRatio->set((float)mOutputFramebuffer.height / (float)framebufferHeight);
+            
+            glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, backBufferWidth, backBufferHeight);
+        } else {
+            /*
+             * Draw directly to back buffer
+             */
+            glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, backBufferWidth, backBufferHeight);
+        }
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+    } else {
+        /*
+         * Undefined program, just clear the back buffer
+         */
+        glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, backBufferWidth, backBufferHeight);
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+}
+
+void
 GLRenderer::renderOpenGL()
 {
     jassert(juce::OpenGLHelpers::isContextActive());
@@ -334,57 +420,12 @@ GLRenderer::renderOpenGL()
         cacheLastAudioTimestamp = lastAudioTimestamp;
 
         mutex.exit();
-        
-        if (processor.getOutputProgramIdx() < programData.size() &&
-            processor.getShaderDestination(processor.getOutputProgramIdx()) == 1) {
-            ProgramData &program = programData[processor.getOutputProgramIdx()];
-            program.program->use();
 
-            setProgramIntrinsics(processor.getOutputProgramIdx(), currentAudioTimestamp,
-                                 backBufferWidth, backBufferHeight);
-            
-            if (processor.getShaderFixedSizeBuffer(processor.getOutputProgramIdx())) {
-                int framebufferWidth = processor.getShaderFixedSizeWidth(processor.getOutputProgramIdx());
-                int framebufferHeight = processor.getShaderFixedSizeHeight(processor.getOutputProgramIdx());
-
-                /*
-                 * First draw to fixed-size framebuffer
-                 */
-                glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mOutputFramebuffer.framebufferObj);
-                glBindTexture(GL_TEXTURE_2D, mOutputFramebuffer.textureObj);
-                glViewport(0, 0, framebufferWidth, framebufferHeight);
-                glDrawArrays(GL_TRIANGLES, 0, 3);
-        
-                /*
-                 * Now stretch to the render area
-                 */
-                copyProgram.use();
-
-                widthRatio->set((float)mOutputFramebuffer.width / (float)framebufferWidth);
-                heightRatio->set((float)mOutputFramebuffer.height / (float)framebufferHeight);
-                
-                glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                glViewport(0, 0, backBufferWidth, backBufferHeight);
-                glDrawArrays(GL_TRIANGLES, 0, 3);
-            } else {
-                /*
-                 * Draw directly to back buffer
-                 */
-                glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                glViewport(0, 0, backBufferWidth, backBufferHeight);
-                glDrawArrays(GL_TRIANGLES, 0, 3);
-            }
-        } else {
-            mutex.exit();
-
-            /*
-             * Undefined program, just clear the back buffer
-             */
-            glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glViewport(0, 0, backBufferWidth, backBufferHeight);
-            glClearColor(0, 0, 0, 1);
-            glClear(GL_COLOR_BUFFER_BIT);
+        for (int i = 0; i < 4; i++) {
+            renderAuxBuffer(i, currentAudioTimestamp, backBufferWidth, backBufferHeight);
         }
+        
+        renderOutputBuffer(currentAudioTimestamp, backBufferWidth, backBufferHeight);
 
         prevRender = now;
     }

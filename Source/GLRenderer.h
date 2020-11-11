@@ -81,8 +81,15 @@ private:
                                GLint size, bool &isIntrinsic, int programIdx);
     void setProgramIntrinsics(int programIdx,
                               double currentAudioTimestamp,
-                              int backbufferWidth,
-                              int backbufferHeight);
+                              int backBufferWidth,
+                              int backBufferHeight);
+    void renderAuxBuffer(int bufferIdx,
+                         double currentAudioTimestamp,
+                         int backBufferWidth,
+                         int backBufferHeight);
+    void renderOutputBuffer(double currentAudioTimestamp,
+                            int backBufferWidth,
+                            int backBufferHeight);
     Framebuffer &destinationToFramebuffer(int destinationId);
     void alertError(const juce::String &title, const juce::String &message);
 
