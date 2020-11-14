@@ -228,8 +228,8 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
                 auxFbWidth[i] = processor.getShaderFixedSizeWidth(bufferProgramIdx);
                 auxFbHeight[i] = processor.getShaderFixedSizeHeight(bufferProgramIdx);
             } else {
-                auxFbWidth[i] = backBufferWidth;
-                auxFbHeight[i] = backBufferHeight;
+                auxFbWidth[i] = mAuxFramebuffers[i].width;
+                auxFbHeight[i] = mAuxFramebuffers[i].height;
             }
         }
     }
