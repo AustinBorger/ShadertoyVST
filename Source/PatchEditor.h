@@ -80,6 +80,7 @@ private:
     juce::TextButton newShaderButton;
     juce::TextButton deleteButton;
     juce::TextButton reloadButton;
+    juce::TextButton reloadAllButton;
 
     juce::Label shaderPropertiesLabel;
     juce::ToggleButton fixedSizeButton;

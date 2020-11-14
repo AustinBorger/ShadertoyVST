@@ -53,6 +53,10 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor,
     addAndMakeVisible(reloadButton);
     reloadButton.setButtonText("Reload");
     reloadButton.addListener(this);
+
+    addAndMakeVisible(reloadAllButton);
+    reloadAllButton.setButtonText("Reload All");
+    reloadAllButton.addListener(this);
     
     /*
      * Top right region (shader properties)
@@ -179,13 +183,15 @@ void PatchEditor::resized()
     
     int buttonWidth = 75;
     int spacing = 10;
-    int totalWidth = buttonWidth + spacing + buttonWidth + spacing + buttonWidth;
+    int totalWidth = buttonWidth * 4 + spacing * 3;
     int newShaderX = (shaderListBounds.getWidth() - totalWidth) / 2;
     int deleteX = newShaderX + buttonWidth + spacing;
     int reloadX = deleteX + buttonWidth + spacing;
+    int reloadAllX = reloadX + buttonWidth + spacing;
     newShaderButton.setBounds(newShaderX, getHeight() - 30, buttonWidth, 20);
     deleteButton.setBounds(deleteX, getHeight() - 30, buttonWidth, 20);
     reloadButton.setBounds(reloadX, getHeight() - 30, buttonWidth, 20);
+    reloadAllButton.setBounds(reloadAllX, getHeight() - 30, buttonWidth, 20);
 
     /*
      * Top right region
@@ -258,6 +264,10 @@ void PatchEditor::buttonClicked(juce::Button *button)
         shaderListBoxModel.deleteSelectedRow();
     } else if (button == &reloadButton) {
         shaderListBoxModel.reloadSelectedRow();
+    } else if (button == &reloadAllButton) {
+        for (int i = 0; i < processor.getNumShaderFiles(); i++) {
+            processor.reloadShaderFile(i);
+        }
     } else if (button == &fixedSizeButton) {
         if (fixedSizeButton.getToggleState()) {
             activateFixedSizeEditors();
