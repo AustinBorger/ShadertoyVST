@@ -618,7 +618,7 @@ GLRenderer::checkIntrinsicUniform(const juce::String &name, // IN
     return true;
     
 failure:
-    alertError("Error reading uniforms",
+    alertError("Error reading uniforms for program " + std::to_string(programIdx),
                "Illegal use of intrinsic uniform name \"" + name + "\", reason: " + failReason);
     return false;
 }
@@ -631,7 +631,8 @@ GLRenderer::buildShaderProgram(int idx) // IN
     if (!program.program->addVertexShader(vert) ||
 	    !program.program->addFragmentShader(processor.getShaderString(idx)) ||
 	    !program.program->link()) {
-	    alertError("Error building program", program.program->getLastError());
+	    alertError("Error building program " + std::to_string(idx),
+                   program.program->getLastError());
 	    return false;
 	}
 	
@@ -658,7 +659,7 @@ GLRenderer::buildShaderProgram(int idx) // IN
 	            juce::String message = "Parameter uniform \"";
 	            message += name;
 	            message += "\" cannot be an array.";
-	            alertError("Error reading uniforms", message);
+	            alertError("Error reading uniforms for program " + std::to_string(idx), message);
 	            return false;
 	        }
 	        
@@ -672,7 +673,7 @@ GLRenderer::buildShaderProgram(int idx) // IN
 	            juce::String message = "Parameter uniform \"";
 	            message += name;
 	            message += "\" of unrecognized type.";
-	            alertError("Error reading uniforms", message);
+	            alertError("Error reading uniforms for program " + std::to_string(idx), message);
 	            return false;
 	        }
 	    }
