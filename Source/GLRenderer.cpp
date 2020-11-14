@@ -244,6 +244,13 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
             program.auxResolutionIntrinsic[i]->set((GLfloat)auxFbWidth[i],
                                                    (GLfloat)auxFbHeight[i]);
         }
+
+        if (program.auxBufferIntrinsic[i] != nullptr &&
+            processor.getShaderDestination(programIdx) != 2 + i) {
+            glContext.extensions.glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, mAuxFramebuffers[i].textureObj);
+            program.auxBufferIntrinsic[i]->set(i);
+        }
     }
 }
 
@@ -263,8 +270,6 @@ GLRenderer::renderAuxBuffer(int bufferIdx,                // IN
                              backBufferWidth, backBufferHeight);
 
         glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mAuxFramebuffers[bufferIdx].framebufferObj);
-        glBindTexture(GL_TEXTURE_2D, mAuxFramebuffers[bufferIdx].textureObj);
-        
         if (processor.getShaderFixedSizeBuffer(programIdx)) {
             glViewport(0, 0, processor.getShaderFixedSizeWidth(programIdx),
                        processor.getShaderFixedSizeHeight(programIdx));
@@ -299,7 +304,6 @@ GLRenderer::renderOutputBuffer(double currentAudioTimestamp, // IN
              * First draw to fixed-size framebuffer
              */
             glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, mOutputFramebuffer.framebufferObj);
-            glBindTexture(GL_TEXTURE_2D, mOutputFramebuffer.textureObj);
             glViewport(0, 0, framebufferWidth, framebufferHeight);
             glDrawArrays(GL_TRIANGLES, 0, 3);
     
@@ -312,6 +316,8 @@ GLRenderer::renderOutputBuffer(double currentAudioTimestamp, // IN
             heightRatio->set((float)mOutputFramebuffer.height / (float)framebufferHeight);
             
             glContext.extensions.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glContext.extensions.glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, mOutputFramebuffer.textureObj);
             glViewport(0, 0, backBufferWidth, backBufferHeight);
         } else {
             /*
@@ -724,11 +730,15 @@ GLRenderer::createFramebuffer(Framebuffer &fbOut, // OUT
     fbOut.height = 360;
 
     for (int i = 0; i < processor.getNumShaderFiles(); i++) {
-        if (processor.getShaderDestination(i) == destinationId &&
-            processor.getShaderFixedSizeBuffer(i)) {
+        if (processor.getShaderDestination(i) == destinationId) {
             shouldCreateBuffer = true;
-            fbOut.width = max(fbOut.width, processor.getShaderFixedSizeWidth(i));
-            fbOut.height = max(fbOut.height, processor.getShaderFixedSizeHeight(i));
+            if (processor.getShaderFixedSizeBuffer(i)) {
+                fbOut.width = max(fbOut.width, processor.getShaderFixedSizeWidth(i));
+                fbOut.height = max(fbOut.height, processor.getShaderFixedSizeHeight(i));
+            } else {
+                fbOut.width = max(fbOut.width, processor.getVisualizationWidth());
+                fbOut.height = max(fbOut.height, processor.getVisualizationHeight());
+            }
         }
     }
     
