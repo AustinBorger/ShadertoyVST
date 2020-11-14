@@ -549,6 +549,7 @@ GLRenderer::checkIntrinsicUniform(const juce::String &name, // IN
                                   int programIdx)           // IN
 {
     ProgramData &program = programData[programIdx];
+    juce::String failReason;
     isIntrinsic = false;
 
     struct Intrinsic {
@@ -579,8 +580,23 @@ GLRenderer::checkIntrinsicUniform(const juce::String &name, // IN
 
     for (int i = 0; i < sizeof(intrinsics) / sizeof(intrinsics[0]); i++) {
         if (name == intrinsics[i].name) {
-            if (type != intrinsics[i].type || size < intrinsics[i].sizeMin || size > intrinsics[i].sizeMax) {
+            if (type != intrinsics[i].type) {
+                failReason = "Incorrect type";
                 goto failure;
+            }
+            
+            if (size < intrinsics[i].sizeMin || size > intrinsics[i].sizeMax) {
+                failReason = "Incorrect size";
+                goto failure;
+            }
+
+            for (int j = 0; j < 4; j++) {
+                juce::String bufferName = "iBuffer";
+                bufferName += char('A' + j);
+                if (name == bufferName && processor.getShaderDestination(programIdx) == 2 + j) {
+                    failReason = "Cannot use the output buffer as an input sampler2D";
+                    goto failure;
+                }
             }
 
             intrinsics[i].uniform = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
@@ -603,7 +619,7 @@ GLRenderer::checkIntrinsicUniform(const juce::String &name, // IN
     
 failure:
     alertError("Error reading uniforms",
-               "Illegal use of intrinsic uniform name \"" + name + "\"");
+               "Illegal use of intrinsic uniform name \"" + name + "\", reason: " + failReason);
     return false;
 }
 
