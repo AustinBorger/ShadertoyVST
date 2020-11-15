@@ -6,6 +6,11 @@ music visualizations, and therefore implements features that are more suited to
 those ends. Automatable parameters and MIDI events are forwarded to the shaders
 as uniforms, facilitating the use of a DAW to produce rhythmically guided animations.
 
+## Installation
+
+Download the latest release on GitHub, and copy the .vst3 to C:\Program Files\Common Files\VST3
+or your preferred VST3 installation location.
+
 ## Supported Platforms
 
 ShadertoyVST makes use of JUCE which is a cross-platform, cross-DAW framework for
