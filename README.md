@@ -13,7 +13,7 @@ or your preferred VST3 installation location.
 
 ## Getting Started
 
-For an introduction, see the [Getting Started Guide](GETTINGSTARTED.md).
+For an introduction, see the [Getting Started Guide](Documentation/GETTINGSTARTED.md).
 
 ## Supported Platforms
 
