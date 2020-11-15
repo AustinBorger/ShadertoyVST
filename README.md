@@ -3,14 +3,24 @@
 ShadertoyVST is an adaptation of the [Shadertoy](https://www.shadertoy.com/)
 development environment in the form of a VST plugin. Its purpose is for creating
 music visualizations, and therefore implements features that are more suited to
-those ends. Automatable parameters and midi events are forwarded to the shaders
-as uniforms, facilitating the use of a DAW to produce rhytmically synchronized
-events that guide the animation.
+those ends. Automatable parameters and MIDI events are forwarded to the shaders
+as uniforms, facilitating the use of a DAW to produce rhythmically guided animations.
+
+## Supported Platforms
+
+ShadertoyVST makes use of JUCE which is a cross-platform, cross-DAW framework for
+creating audio plugins. Currently, the only tested platform / DAW combination is
+FL Studio 20 on Windows 10. Bugs are likely to exist on other Operating Systems
+and DAWs. See the Contribution section if you would like to help improve stability
+on these untested environments.
 
 ## Contribution
 
-All contributors are welcome. If you have a feature you would like to add to
-ShadertoyVST, fork off a new repo and submit a pull request.
+All contributors are welcome. This project is in need of contributors on other
+platforms to verify correct behavior of the VST plugin.
+
+If you have a feature you would like to add t o ShadertoyVST, fork off a new
+repo and submit a pull request.
 
 Bug reports should be submitted through the normal GitHub issue tracker.
 
