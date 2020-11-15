@@ -11,6 +11,10 @@ as uniforms, facilitating the use of a DAW to produce rhythmically guided animat
 Download the latest release on GitHub, and copy the .vst3 to C:\Program Files\Common Files\VST3
 or your preferred VST3 installation location.
 
+## Getting Started
+
+For an introduction, see the [Getting Started Guide](GETTINGSTARTED.md).
+
 ## Supported Platforms
 
 ShadertoyVST makes use of JUCE which is a cross-platform, cross-DAW framework for
