@@ -1,3 +1,5 @@
+## Overview
+
 ShadertoyVST is an adaptation of the [Shadertoy](https://www.shadertoy.com/)
 development environment in the form of a VST plugin. Its purpose is for creating
 music visualizations, and therefore implements features that are more suited to
@@ -12,7 +14,7 @@ ShadertoyVST, fork off a new repo and submit a pull request.
 
 Bug reports should be submitted through the normal GitHub issue tracker.
 
-Contributors:
+Core Contributors:
 - Austin Borger (aaborger@gmail.com)
 
 ## License
