@@ -1,4 +1,4 @@
-ShadertoyVST is an adaptation of the [https://www.shadertoy.com/](Shadertoy)
+ShadertoyVST is an adaptation of the [Shadertoy](https://www.shadertoy.com/)
 development environment in the form of a VST plugin. Its purpose is for creating
 music visualizations, and therefore implements features that are more suited to
 those ends.
