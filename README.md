@@ -24,7 +24,7 @@ on these untested environments.
 All contributors are welcome. This project is in need of contributors on other
 platforms to verify correct behavior of the VST plugin.
 
-If you have a feature you would like to add t o ShadertoyVST, fork off a new
+If you have a feature you would like to add to ShadertoyVST, fork off a new
 repo and submit a pull request.
 
 Bug reports should be submitted through the normal GitHub issue tracker.
