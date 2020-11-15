@@ -16,7 +16,7 @@
 #include "PatchEditor.h"
 #include "Console.h"
 
-#define ENABLE_DEBUG_CONSOLE 1
+#define ENABLE_DEBUG_CONSOLE 0
 
 /*
  * ShadertoyAudioProcessorEditor
