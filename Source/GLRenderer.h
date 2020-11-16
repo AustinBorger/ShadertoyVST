@@ -46,8 +46,8 @@ public:
 private:
     struct ProgramData {
         std::unique_ptr<juce::OpenGLShaderProgram> program;
-        std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformFloats;
-        std::vector<std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformInts;
+        std::map<int, std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformFloats;
+        std::map<int, std::unique_ptr<juce::OpenGLShaderProgram::Uniform>> uniformInts;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> outputResolutionIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> auxResolutionIntrinsic[4];
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> auxBufferIntrinsic[4];

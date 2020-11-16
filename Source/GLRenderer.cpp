@@ -177,14 +177,16 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
         program.sampleRateIntrinsic->set((GLfloat)mSampleRate);
     }
 
-    for (int i = 0; i < program.uniformFloats.size(); i++) {
-        float val = processor.getUniformFloat(i);
-        program.uniformFloats[i]->set(val);
+    for (auto it = program.uniformFloats.begin(); it != program.uniformFloats.end(); ++it) {
+        int uniformIdx = it->first;
+        float val = processor.getUniformFloat(uniformIdx);
+        it->second->set(val);
     }
 
-    for (int i = 0; i < program.uniformInts.size(); i++) {
-        int val = processor.getUniformInt(i);
-        program.uniformInts[i]->set(val);
+    for (auto it = program.uniformInts.begin(); it != program.uniformInts.end(); ++it) {
+        int uniformIdx = it->first;
+        int val = processor.getUniformInt(uniformIdx);
+        it->second->set(val);
     }
 
     if (program.keyDownIntrinsic != nullptr) {
@@ -623,10 +625,22 @@ failure:
     return false;
 }
 
+bool isDigit(const juce::String &str)
+{
+    for (int i = 0; i < str.length(); i++) {
+        if (str[i] < '0' || str[i] > '9') {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool
 GLRenderer::buildShaderProgram(int idx) // IN
 {
     ProgramData &program = programData[idx];
+    juce::String message;
 
     if (!program.program->addVertexShader(vert) ||
 	    !program.program->addFragmentShader(processor.getShaderString(idx)) ||
@@ -655,31 +669,55 @@ GLRenderer::buildShaderProgram(int idx) // IN
 	    }
 	    
 	    if (!isIntrinsic) {
-	        if (size != 1) {
-	            juce::String message = "Parameter uniform \"";
+            int uniformIdx = 0;
+
+            if (size != 1) {
+	            message = "Parameter uniform \"";
 	            message += name;
 	            message += "\" cannot be an array.";
-	            alertError("Error reading uniforms for program " + std::to_string(idx), message);
-	            return false;
+	            goto failure;
 	        }
-	        
-	        if (type == GL_FLOAT) {
-	            program.uniformFloats.emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-	                (new juce::OpenGLShaderProgram::Uniform(*program.program, name))));
-	        } else if (type == GL_INT) {
-	            program.uniformInts.emplace_back(std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
-	                (new juce::OpenGLShaderProgram::Uniform(*program.program, name))));
-	        } else {
-	            juce::String message = "Parameter uniform \"";
+
+            if (type == GL_FLOAT) {
+                if (nameStr.substring(0, 5) != "float" ||
+                    !isDigit(nameStr.substring(5)) ||
+                    (uniformIdx = nameStr.substring(5).getIntValue()) < 0 ||
+                    uniformIdx > 255) {
+                    message = "Parameter uniform \"";
+                    message += name;
+                    message += "\" must be named float0..255";
+                    goto failure;
+                }
+
+                program.uniformFloats[uniformIdx] = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+	                (new juce::OpenGLShaderProgram::Uniform(*program.program, name)));
+            } else if (type == GL_INT) {
+                if (nameStr.substring(0, 3) != "int" ||
+                    !isDigit(nameStr.substring(3)) ||
+                    (uniformIdx = nameStr.substring(3).getIntValue()) < 0 ||
+                    uniformIdx > 255) {
+                    message = "Parameter uniform \"";
+                    message += name;
+                    message += "\" must be named int0..255";
+                    goto failure;
+                }
+
+                program.uniformInts[uniformIdx] = std::move(std::unique_ptr<juce::OpenGLShaderProgram::Uniform>
+	                (new juce::OpenGLShaderProgram::Uniform(*program.program, name)));
+            } else {
+	            message = "Parameter uniform \"";
 	            message += name;
 	            message += "\" of unrecognized type.";
-	            alertError("Error reading uniforms for program " + std::to_string(idx), message);
-	            return false;
+	            goto failure;
 	        }
 	    }
 	}
 	
 	return true;
+
+failure:
+    alertError("Error reading uniforms for program " + std::to_string(idx), message);
+    return false;
 }
 
 bool
