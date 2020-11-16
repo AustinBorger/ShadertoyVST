@@ -14,3 +14,14 @@ framebuffer the shader renders to and, if desired, a fixed width and height
 for the output.
 - In the bottom-right you have global properties. Right now this is just the
 size of the visualization output.
+
+## Parameters
+
+![](parameters.PNG)
+
+The list of parameters is as such:
+
+- The program IDs of the active shaders for each of the output and auxiliary
+buffers (BufferA..D)
+- Floating point parameters between 0..1
+- Integer parameters between 0..100
