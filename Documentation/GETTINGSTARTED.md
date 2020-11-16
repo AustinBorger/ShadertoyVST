@@ -3,7 +3,9 @@
 ![](gui.PNG)
 
 The GUI for ShadertoyVST is pretty simple at the moment. The VST window is
-split up into three components:
+split up into two tabs - the patch editor, and the visualization output.
+
+The patch editor is split up into three sections:
 - On the left-hand side you have the list of shaders. Each shader is assigned
 an ID and a file location. Buttons on the bottom allow you to load, delete,
 and reload shaders to the list.
