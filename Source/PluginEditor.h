@@ -38,6 +38,7 @@ public:
 #if ENABLE_DEBUG_CONSOLE == 1
       debugConsole.logMessage(message);
 #endif
+      (void)(message);
     }
 
 private:

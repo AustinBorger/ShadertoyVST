@@ -101,20 +101,26 @@ int ShadertoyAudioProcessor::getCurrentProgram()
 
 void ShadertoyAudioProcessor::setCurrentProgram(int index)
 {
+    (void)(index);
 }
 
 const juce::String ShadertoyAudioProcessor::getProgramName(int index)
 {
+    (void)(index);
     return {};
 }
 
 void ShadertoyAudioProcessor::changeProgramName(int index, const juce::String& newName)
 {
+    (void)(index);
+    (void)(newName);
 }
 
 //==============================================================================
 void ShadertoyAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    (void)(samplesPerBlock);
+
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
     mSampleRate = sampleRate;
@@ -218,7 +224,7 @@ void ShadertoyAudioProcessor::setStateInformation(const void* data, int sizeInBy
             if (child->hasTagName("ShaderFile")) {
                 const juce::String &shaderFile = child->getStringAttribute("Path");
                 addShaderFileEntry();
-                setShaderFile(getNumShaderFiles() - 1, shaderFile);
+                setShaderFile((int)(getNumShaderFiles() - 1), shaderFile);
                 shaderData.back().destination =
                     child->getIntAttribute("Destination", shaderData.back().destination);
 
