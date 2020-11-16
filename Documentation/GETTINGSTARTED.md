@@ -49,3 +49,16 @@ intrinsic uniforms defined below:
 - `float iTime` - The current render time. Note that this is not the same as playlist or sequencer time.
 - `float iSampleRate` - The sample rate of the input audio stream.
 - `float iAudioChannel0..1[]` - An array of the last N samples for each audio channel. N can range from 16 to 2048.
+
+## Auxiliary Buffers
+
+Like https://www.shadertoy.com/ there are four additional buffers for multipass
+rendering algorithms. These buffers are processed in order from iBufferA to iBufferD.
+A shader rendering to these buffers can use any of the other auxiliary output buffers
+as input, but not itself. And of course, the output framebuffer has access to all four
+auxiliary buffers.
+
+The behavior is as such that if you were to feed a subsequent buffer into an antecedent
+buffer (for example, iBufferD into iBufferA), you would be reading the previous frame's
+contents for iBufferD. This is useful if you have a rendering algorithm with a dependency
+on the previous frame.
