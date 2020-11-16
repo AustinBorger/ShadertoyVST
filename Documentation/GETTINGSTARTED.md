@@ -1,1 +1,1 @@
-![alt text](gui.png "ShadertoyVST")
+![](gui.png)
