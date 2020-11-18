@@ -20,9 +20,7 @@ class ShadertoyAudioProcessorEditor;
  *    and modifying shader-specific / global properties.
  */
 class PatchEditor : public juce::Component,
-                    public juce::Button::Listener,
                     public juce::TextEditor::Listener,
-                    public juce::ComboBox::Listener,
                     public ShadertoyAudioProcessor::StateListener
 {
 public:
@@ -32,9 +30,7 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
-    void buttonClicked(juce::Button *) override;
     void textEditorTextChanged(juce::TextEditor &) override;
-    void comboBoxChanged(juce::ComboBox *comboBoxThatHasChanged) override;
     void processorStateChanged() override;
 
 private:
@@ -97,22 +93,50 @@ private:
         ShadertoyAudioProcessor &processor;
         PatchEditor &parent;
     };
-    
-    void greyOutFixedSizeEditors();
-    void activateFixedSizeEditors();
-    void greyOutTopRightRegion();
+
+    class ShaderPropertiesComponent : public juce::Component,
+                                      public juce::Button::Listener,
+                                      public juce::TextEditor::Listener,
+                                      public juce::ComboBox::Listener
+    {
+    public:
+        ShaderPropertiesComponent(ShadertoyAudioProcessorEditor &editor,
+                                  ShadertoyAudioProcessor &processor,
+                                  PatchEditor &parent,
+                                  ShaderListComponent &shaderListComponent);
+
+        void paint(juce::Graphics&) override;
+        void resized() override;
+        void buttonClicked(juce::Button *) override;
+        void textEditorTextChanged(juce::TextEditor &) override;
+        void comboBoxChanged(juce::ComboBox *comboBoxThatHasChanged) override;
+
+        void greyOutFixedSizeEditors();
+        void activateFixedSizeEditors();
+        void greyOut();
+        void load(int shaderIdx);
+
+    private:
+        juce::Label shaderPropertiesLabel;
+        juce::ToggleButton fixedSizeButton;
+        juce::TextEditor fixedSizeWidthEditor;
+        juce::Label fixedSizeWidthLabel;
+        juce::TextEditor fixedSizeHeightEditor;
+        juce::Label fixedSizeHeightLabel;
+        juce::ComboBox destinationBox;
+        juce::Label destinationLabel;
+
+        ShadertoyAudioProcessorEditor &editor;
+        ShadertoyAudioProcessor &processor;
+        PatchEditor &parent;
+        ShaderListComponent &shaderListComponent;
+    };
+
     void loadTopRightRegion(int shaderIdx);
+    void greyOutTopRightRegion();
 
     ShaderListComponent shaderListComponent;
-
-    juce::Label shaderPropertiesLabel;
-    juce::ToggleButton fixedSizeButton;
-    juce::TextEditor fixedSizeWidthEditor;
-    juce::Label fixedSizeWidthLabel;
-    juce::TextEditor fixedSizeHeightEditor;
-    juce::Label fixedSizeHeightLabel;
-    juce::ComboBox destinationBox;
-    juce::Label destinationLabel;
+    ShaderPropertiesComponent shaderPropertiesComponent;
 
     juce::Label globalPropertiesLabel;
     juce::TextEditor visuWidthEditor;
