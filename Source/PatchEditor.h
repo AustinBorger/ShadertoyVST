@@ -20,7 +20,6 @@ class ShadertoyAudioProcessorEditor;
  *    and modifying shader-specific / global properties.
  */
 class PatchEditor : public juce::Component,
-                    public juce::TextEditor::Listener,
                     public ShadertoyAudioProcessor::StateListener
 {
 public:
@@ -30,7 +29,6 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
-    void textEditorTextChanged(juce::TextEditor &) override;
     void processorStateChanged() override;
 
 private:
@@ -132,17 +130,38 @@ private:
         ShaderListComponent &shaderListComponent;
     };
 
+    class GlobalPropertiesComponent : public juce::Component,
+                                      public juce::TextEditor::Listener
+    {
+    public:
+        GlobalPropertiesComponent(ShadertoyAudioProcessorEditor &editor,
+                                  ShadertoyAudioProcessor &processor,
+                                  PatchEditor &parent);
+
+        void paint(juce::Graphics&) override;
+        void resized() override;
+        void textEditorTextChanged(juce::TextEditor &) override;
+
+        void updateVisuSize();
+
+    private:
+        juce::Label globalPropertiesLabel;
+        juce::TextEditor visuWidthEditor;
+        juce::Label visuWidthLabel;
+        juce::TextEditor visuHeightEditor;
+        juce::Label visuHeightLabel;
+
+        ShadertoyAudioProcessorEditor &editor;
+        ShadertoyAudioProcessor &processor;
+        PatchEditor &parent;
+    };
+
     void loadTopRightRegion(int shaderIdx);
     void greyOutTopRightRegion();
 
     ShaderListComponent shaderListComponent;
     ShaderPropertiesComponent shaderPropertiesComponent;
-
-    juce::Label globalPropertiesLabel;
-    juce::TextEditor visuWidthEditor;
-    juce::Label visuWidthLabel;
-    juce::TextEditor visuHeightEditor;
-    juce::Label visuHeightLabel;
+    GlobalPropertiesComponent globalPropertiesComponent;
 
     ShadertoyAudioProcessorEditor &editor;
     ShadertoyAudioProcessor &processor;

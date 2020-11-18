@@ -13,50 +13,17 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor,
-                         ShadertoyAudioProcessor& processor)
+PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor, // IN / OUT
+                         ShadertoyAudioProcessor& processor)    // IN / OUT
  : editor(editor),
    processor(processor),
    shaderListComponent(editor, processor, *this),
-   shaderPropertiesComponent(editor, processor, *this, shaderListComponent)
+   shaderPropertiesComponent(editor, processor, *this, shaderListComponent),
+   globalPropertiesComponent(editor, processor, *this)
 {
-    /*
-     * Shader list box (left region)
-     */
-
     addAndMakeVisible(shaderListComponent);
-    
-    /*
-     * Top right region (shader properties)
-     */
-
     addAndMakeVisible(shaderPropertiesComponent);
-
-    /*
-     * Bottom right region (global properties)
-     */
-    
-    addAndMakeVisible(globalPropertiesLabel);
-    globalPropertiesLabel.setText("Global Properties", juce::NotificationType::dontSendNotification);
-    globalPropertiesLabel.setColour(juce::Label::textColourId, juce::Colours::black);
-
-    addAndMakeVisible(visuWidthEditor);
-    visuWidthEditor.setMultiLine(false);
-    visuWidthEditor.setInputRestrictions(4, "0123456789");
-    visuWidthEditor.addListener(this);
-    visuWidthEditor.setText(std::to_string(processor.getVisualizationWidth()), false);
-
-    addAndMakeVisible(visuWidthLabel);
-    visuWidthLabel.setText("Visualization Width:", juce::NotificationType::dontSendNotification);
-
-    addAndMakeVisible(visuHeightEditor);
-    visuHeightEditor.setMultiLine(false);
-    visuHeightEditor.setInputRestrictions(4, "0123456789");
-    visuHeightEditor.addListener(this);
-    visuHeightEditor.setText(std::to_string(processor.getVisualizationHeight()), false);
-
-    addAndMakeVisible(visuHeightLabel);
-    visuHeightLabel.setText("Visualization Height:", juce::NotificationType::dontSendNotification);
+    addAndMakeVisible(globalPropertiesComponent);
 
     processor.addStateListener(this);
 }
@@ -67,70 +34,24 @@ PatchEditor::~PatchEditor()
 }
 
 void
-PatchEditor::paint(juce::Graphics& g)
+PatchEditor::paint(juce::Graphics& g) // IN
 {
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-
-    g.setColour(juce::Colours::white);
-    g.fillRect(globalPropertiesLabel.getBounds());
 }
 
 void
 PatchEditor::resized()
 {
-    /*
-     * Shader list
-     */
-
     shaderListComponent.setBounds(0, 0, getWidth() / 3, getHeight());
-
-    /*
-     * Top right region
-     */
 
     shaderPropertiesComponent.setBounds(shaderListComponent.getWidth(), 0,
                                         getWidth() - shaderListComponent.getWidth(),
                                         getHeight() / 2);
 
-    /*
-     * Bottom right region
-     */
-
-    globalPropertiesLabel.setBounds(shaderPropertiesComponent.getX(),
-                                    shaderPropertiesComponent.getHeight(),
-                                    shaderPropertiesComponent.getWidth(), 30);
-
-    juce::Rectangle<int> bottomRightRegion;
-    bottomRightRegion.setX(shaderPropertiesComponent.getX());
-    bottomRightRegion.setY(globalPropertiesLabel.getY() + globalPropertiesLabel.getHeight());
-    bottomRightRegion.setWidth(shaderPropertiesComponent.getWidth());
-    bottomRightRegion.setHeight(getHeight() - shaderPropertiesComponent.getHeight() - globalPropertiesLabel.getHeight());
-
-    int padding = 10;
-    int spacing = 10;
-    visuWidthLabel.setBounds(bottomRightRegion.getX() + padding,
-                             bottomRightRegion.getY() + padding,
-                             150, 20);
-    visuWidthEditor.setBounds(visuWidthLabel.getX() + visuWidthLabel.getWidth(),
-                              visuWidthLabel.getY(), 75, 20);
-
-    visuHeightLabel.setBounds(bottomRightRegion.getX() + padding,
-                              visuWidthLabel.getY() + visuWidthLabel.getHeight() + spacing,
-                              150, 20);
-    visuHeightEditor.setBounds(visuHeightLabel.getX() + visuHeightLabel.getWidth(),
-                               visuHeightLabel.getY(), 75, 20);
-}
-
-void
-PatchEditor::textEditorTextChanged(juce::TextEditor &textEditor)
-{
-    if (&textEditor == &visuWidthEditor) {
-        int width = textEditor.getText().getIntValue();
-        processor.setVisualizationWidth(width);
-    } else if (&textEditor == &visuHeightEditor) {
-        int height = textEditor.getText().getIntValue();
-        processor.setVisualizationHeight(height);
-    }
+    globalPropertiesComponent.setBounds(shaderListComponent.getWidth(),
+                                        shaderPropertiesComponent.getHeight(),
+                                        shaderPropertiesComponent.getWidth(),
+                                        getHeight() / 2);
 }
 
 void
@@ -148,13 +69,13 @@ PatchEditor::greyOutTopRightRegion()
 void
 PatchEditor::processorStateChanged()
 {
-    visuWidthEditor.setText(std::to_string(processor.getVisualizationWidth()), false);
-    visuHeightEditor.setText(std::to_string(processor.getVisualizationHeight()), false);
+    globalPropertiesComponent.updateVisuSize();
 }
 
-PatchEditor::ShaderListBoxModel::ShaderListBoxModel(juce::TableListBox *box,
-                                                    PatchEditor &patchEditor,
-                                                    ShadertoyAudioProcessor &processor)
+PatchEditor::ShaderListBoxModel::ShaderListBoxModel(
+    juce::TableListBox *box,            // IN / OUT
+    PatchEditor &patchEditor,           // IN / OUT
+    ShadertoyAudioProcessor &processor) // IN / OUT
  : box(box),
    patchEditor(patchEditor),
    processor(processor),
@@ -169,11 +90,11 @@ PatchEditor::ShaderListBoxModel::getNumRows()
 
 void
 PatchEditor::ShaderListBoxModel::paintRowBackground(
-    juce::Graphics &g,
-    int rowNumber,
-    int width,
-    int height,
-    bool rowIsSelected)
+    juce::Graphics &g,  // IN
+    int rowNumber,      // IN
+    int width,          // IN
+    int height,         // IN
+    bool rowIsSelected) // IN
 {
     auto alternateColour = box->findColour(juce::ListBox::backgroundColourId)
                            .interpolatedWith(box->findColour(juce::ListBox::textColourId), 0.03f);
@@ -190,12 +111,12 @@ PatchEditor::ShaderListBoxModel::paintRowBackground(
 
 void
 PatchEditor::ShaderListBoxModel::paintCell(
-    juce::Graphics &g,
-    int rowNumber,
-    int columnId,
-    int width,
-    int height,
-    bool rowIsSelected)
+    juce::Graphics &g,  // IN
+    int rowNumber,      // IN
+    int columnId,       // IN
+    int width,          // IN
+    int height,         // IN
+    bool rowIsSelected) // IN
 {
     g.setColour(rowIsSelected ? juce::Colours::darkblue : box->findColour(juce::ListBox::textColourId));
     g.setFont(font);
@@ -216,7 +137,7 @@ PatchEditor::ShaderListBoxModel::paintCell(
 }
 
 void
-PatchEditor::ShaderListBoxModel::selectedRowsChanged(int lastRowSelected)
+PatchEditor::ShaderListBoxModel::selectedRowsChanged(int lastRowSelected) // IN
 {
     selectedRow = lastRowSelected;
     patchEditor.loadTopRightRegion(selectedRow);
@@ -224,9 +145,9 @@ PatchEditor::ShaderListBoxModel::selectedRowsChanged(int lastRowSelected)
 
 void
 PatchEditor::ShaderListBoxModel::cellDoubleClicked(
-    int rowNumber,
-    int columnId,
-    const juce::MouseEvent &)
+    int rowNumber,            // IN
+    int columnId,             // IN
+    const juce::MouseEvent &) // IN
 {
     juce::FileChooser fileChooser("Choose Shader File", juce::File::getSpecialLocation(juce::File::userHomeDirectory), "*.glsl");
     if (fileChooser.browseForFileToOpen()) {
@@ -234,7 +155,7 @@ PatchEditor::ShaderListBoxModel::cellDoubleClicked(
         box->updateContent();
     }
 
-    // Unreferenced parametrs
+    // Unreferenced parameters
     (void)(columnId);
 }
 
@@ -581,4 +502,81 @@ PatchEditor::ShaderPropertiesComponent::comboBoxChanged(
         int id = destinationBox.getSelectedId();
         processor.setShaderDestination(shaderListComponent.getSelectedRow(), id);
     }
+}
+
+PatchEditor::GlobalPropertiesComponent::GlobalPropertiesComponent(
+    ShadertoyAudioProcessorEditor &editor, // IN / OUT
+    ShadertoyAudioProcessor &processor,    // IN / OUT
+    PatchEditor &parent)                   // IN / OUT
+ : editor(editor),
+   processor(processor),
+   parent(parent)
+{
+    addAndMakeVisible(globalPropertiesLabel);
+    globalPropertiesLabel.setText("Global Properties", juce::NotificationType::dontSendNotification);
+    globalPropertiesLabel.setColour(juce::Label::textColourId, juce::Colours::black);
+
+    addAndMakeVisible(visuWidthEditor);
+    visuWidthEditor.setMultiLine(false);
+    visuWidthEditor.setInputRestrictions(4, "0123456789");
+    visuWidthEditor.addListener(this);
+    visuWidthEditor.setText(std::to_string(processor.getVisualizationWidth()), false);
+
+    addAndMakeVisible(visuWidthLabel);
+    visuWidthLabel.setText("Visualization Width:", juce::NotificationType::dontSendNotification);
+
+    addAndMakeVisible(visuHeightEditor);
+    visuHeightEditor.setMultiLine(false);
+    visuHeightEditor.setInputRestrictions(4, "0123456789");
+    visuHeightEditor.addListener(this);
+    visuHeightEditor.setText(std::to_string(processor.getVisualizationHeight()), false);
+
+    addAndMakeVisible(visuHeightLabel);
+    visuHeightLabel.setText("Visualization Height:", juce::NotificationType::dontSendNotification);
+}
+
+void
+PatchEditor::GlobalPropertiesComponent::paint(juce::Graphics& g) // IN
+{
+    g.setColour(juce::Colours::white);
+    g.fillRect(globalPropertiesLabel.getBounds());
+}
+
+void
+PatchEditor::GlobalPropertiesComponent::resized()
+{
+    globalPropertiesLabel.setBounds(0, 0, getWidth(), 30);
+
+    int padding = 10;
+    int spacing = 10;
+    visuWidthLabel.setBounds(padding, globalPropertiesLabel.getHeight() + padding,
+                             150, 20);
+    visuWidthEditor.setBounds(visuWidthLabel.getX() + visuWidthLabel.getWidth(),
+                              visuWidthLabel.getY(), 75, 20);
+
+    visuHeightLabel.setBounds(padding,
+                              visuWidthLabel.getY() + visuWidthLabel.getHeight() + spacing,
+                              150, 20);
+    visuHeightEditor.setBounds(visuHeightLabel.getX() + visuHeightLabel.getWidth(),
+                               visuHeightLabel.getY(), 75, 20);
+}
+
+void
+PatchEditor::GlobalPropertiesComponent::textEditorTextChanged(
+    juce::TextEditor &textEditor) // IN
+{
+    if (&textEditor == &visuWidthEditor) {
+        int width = textEditor.getText().getIntValue();
+        processor.setVisualizationWidth(width);
+    } else if (&textEditor == &visuHeightEditor) {
+        int height = textEditor.getText().getIntValue();
+        processor.setVisualizationHeight(height);
+    }
+}
+
+void
+PatchEditor::GlobalPropertiesComponent::updateVisuSize()
+{
+    visuWidthEditor.setText(std::to_string(processor.getVisualizationWidth()), false);
+    visuHeightEditor.setText(std::to_string(processor.getVisualizationHeight()), false);
 }
