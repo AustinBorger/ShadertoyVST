@@ -1,12 +1,10 @@
-/*
-  ==============================================================================
+/*******************************************************************************
 
     PatchEditor.h
     Created: 17 Aug 2020 7:16:02pm
     Author:  Austin Borger, aaborger@gmail.com
 
-  ==============================================================================
-*/
+*******************************************************************************/
 
 #pragma once
 
@@ -21,11 +19,11 @@ class ShadertoyAudioProcessorEditor;
  *    Provides controls for adding/deleting fragment shaders
  *    and modifying shader-specific / global properties.
  */
-class PatchEditor  : public juce::Component,
-                     public juce::Button::Listener,
-                     public juce::TextEditor::Listener,
-                     public juce::ComboBox::Listener,
-                     public ShadertoyAudioProcessor::StateListener
+class PatchEditor : public juce::Component,
+                    public juce::Button::Listener,
+                    public juce::TextEditor::Listener,
+                    public juce::ComboBox::Listener,
+                    public ShadertoyAudioProcessor::StateListener
 {
 public:
     PatchEditor(ShadertoyAudioProcessorEditor &editor,
@@ -44,7 +42,7 @@ private:
     {
     public:
         ShaderListBoxModel(juce::TableListBox *box,
-                           PatchEditor &parent,
+                           PatchEditor &patchEditor,
                            ShadertoyAudioProcessor &processor);
         virtual ~ShaderListBoxModel() { }
 
@@ -54,7 +52,8 @@ private:
         void paintCell(juce::Graphics &, int rowNumber, int columnId, int width,
                        int height, bool rowIsSelected) override;
         void selectedRowsChanged(int lastRowSelected) override;
-        void cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent &) override;
+        void cellDoubleClicked(int rowNumber, int columnId,
+                               const juce::MouseEvent &) override;
 
         void newRow();
         void deleteSelectedRow();
@@ -65,9 +64,38 @@ private:
         juce::Font font { 14.0f };
         juce::TableListBox *box;
 
-        PatchEditor &parent;
+        PatchEditor &patchEditor;
         ShadertoyAudioProcessor &processor;
         int selectedRow;
+    };
+
+    class ShaderListComponent : public juce::Component,
+                                public juce::Button::Listener
+    {
+    public:
+        ShaderListComponent(ShadertoyAudioProcessorEditor &editor,
+                            ShadertoyAudioProcessor &processor,
+                            PatchEditor &parent);
+
+        void paint(juce::Graphics&) override;
+        void resized() override;
+        void buttonClicked(juce::Button *) override;
+
+        int getSelectedRow();
+
+    private:
+        juce::Label shaderListLabel;
+        juce::TableListBox shaderListBox;
+        juce::TextButton newShaderButton;
+        juce::TextButton deleteButton;
+        juce::TextButton reloadButton;
+        juce::TextButton reloadAllButton;
+
+        ShaderListBoxModel shaderListBoxModel;
+
+        ShadertoyAudioProcessorEditor &editor;
+        ShadertoyAudioProcessor &processor;
+        PatchEditor &parent;
     };
     
     void greyOutFixedSizeEditors();
@@ -75,12 +103,7 @@ private:
     void greyOutTopRightRegion();
     void loadTopRightRegion(int shaderIdx);
 
-    juce::Label shaderListLabel;
-    juce::TableListBox shaderListBox;
-    juce::TextButton newShaderButton;
-    juce::TextButton deleteButton;
-    juce::TextButton reloadButton;
-    juce::TextButton reloadAllButton;
+    ShaderListComponent shaderListComponent;
 
     juce::Label shaderPropertiesLabel;
     juce::ToggleButton fixedSizeButton;
@@ -96,8 +119,7 @@ private:
     juce::Label visuWidthLabel;
     juce::TextEditor visuHeightEditor;
     juce::Label visuHeightLabel;
-    
-    ShaderListBoxModel shaderListBoxModel;
+
     ShadertoyAudioProcessorEditor &editor;
     ShadertoyAudioProcessor &processor;
 

@@ -17,46 +17,18 @@ PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor,
                          ShadertoyAudioProcessor& processor)
  : editor(editor),
    processor(processor),
-   shaderListBox(),
-   newShaderButton(),
-   deleteButton(),
-   reloadButton(),
+   shaderListComponent(editor, processor, *this),
    fixedSizeButton("Fixed Size Framebuffer"),
    fixedSizeWidthEditor(),
    fixedSizeWidthLabel(),
    fixedSizeHeightEditor(),
-   fixedSizeHeightLabel(),
-   shaderListBoxModel(&shaderListBox, *this, processor)
+   fixedSizeHeightLabel()
 {
     /*
      * Shader list box (left region)
      */
 
-    addAndMakeVisible(shaderListLabel);
-    shaderListLabel.setText("Shaders", juce::NotificationType::dontSendNotification);
-
-    addAndMakeVisible(shaderListBox);
-    shaderListBox.setModel(&shaderListBoxModel);
-    shaderListBox.getHeader().addColumn("ID", 0, 30, 30, -1,
-                                        juce::TableHeaderComponent::ColumnPropertyFlags::notSortable);
-    shaderListBox.getHeader().addColumn("File Location", 1, 30, 30, -1,
-                                        juce::TableHeaderComponent::ColumnPropertyFlags::notSortable);
-                                        
-    addAndMakeVisible(newShaderButton);
-    newShaderButton.setButtonText("New");
-    newShaderButton.addListener(this);
-    
-    addAndMakeVisible(deleteButton);
-    deleteButton.setButtonText("Delete");
-    deleteButton.addListener(this);
-    
-    addAndMakeVisible(reloadButton);
-    reloadButton.setButtonText("Reload");
-    reloadButton.addListener(this);
-
-    addAndMakeVisible(reloadAllButton);
-    reloadAllButton.setButtonText("Reload All");
-    reloadAllButton.addListener(this);
+    addAndMakeVisible(shaderListComponent);
     
     /*
      * Top right region (shader properties)
@@ -137,21 +109,10 @@ void PatchEditor::paint(juce::Graphics& g)
 {
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
-    juce::Rectangle<int> behindShaderList;
-    behindShaderList.setX(0);
-    behindShaderList.setY(0);
-    behindShaderList.setWidth(shaderListBox.getWidth());
-    behindShaderList.setHeight(getHeight());
-    g.setColour(shaderListBox.findColour(juce::ListBox::backgroundColourId));
-    g.fillRect(behindShaderList);
-
-    g.setColour(juce::Colours::black);
-    g.fillRect(shaderListLabel.getBounds());
-
     juce::Rectangle<int> topRightRegion;
-    topRightRegion.setX(behindShaderList.getWidth());
+    topRightRegion.setX(shaderListComponent.getWidth());
     topRightRegion.setY(0);
-    topRightRegion.setWidth(getWidth() - behindShaderList.getWidth());
+    topRightRegion.setWidth(getWidth() - shaderListComponent.getWidth());
     topRightRegion.setHeight(getHeight() / 2);
     g.setColour(juce::Colour::fromRGB(128, 128, 128));
     g.fillRect(topRightRegion);
@@ -168,46 +129,24 @@ void PatchEditor::resized()
     /*
      * Shader list
      */
-    juce::Rectangle<int> shaderListBounds;
-    shaderListBounds.setX(0);
-    shaderListBounds.setWidth(getBounds().getWidth() / 3);
-
-    shaderListLabel.setBounds(shaderListBounds.getX(), 0, shaderListBounds.getWidth(), 30);
-
-    shaderListBounds.setY(shaderListLabel.getHeight());
-    shaderListBounds.setHeight(getBounds().getHeight() - shaderListLabel.getHeight() - 40);
-
-    shaderListBox.setBounds(shaderListBounds);
-    shaderListBox.getHeader().setColumnWidth(0, 40);
-    shaderListBox.getHeader().setColumnWidth(1, shaderListBounds.getWidth() - 40);
-    
-    int buttonWidth = 75;
-    int spacing = 10;
-    int totalWidth = buttonWidth * 4 + spacing * 3;
-    int newShaderX = (shaderListBounds.getWidth() - totalWidth) / 2;
-    int deleteX = newShaderX + buttonWidth + spacing;
-    int reloadX = deleteX + buttonWidth + spacing;
-    int reloadAllX = reloadX + buttonWidth + spacing;
-    newShaderButton.setBounds(newShaderX, getHeight() - 30, buttonWidth, 20);
-    deleteButton.setBounds(deleteX, getHeight() - 30, buttonWidth, 20);
-    reloadButton.setBounds(reloadX, getHeight() - 30, buttonWidth, 20);
-    reloadAllButton.setBounds(reloadAllX, getHeight() - 30, buttonWidth, 20);
+    shaderListComponent.setBounds(0, 0, getWidth() / 3, getHeight());
 
     /*
      * Top right region
      */
 
-    shaderPropertiesLabel.setBounds(shaderListBounds.getWidth(), 0,
-                                    getWidth() - shaderListBounds.getWidth(),
+    shaderPropertiesLabel.setBounds(shaderListComponent.getWidth(), 0,
+                                    getWidth() - shaderListComponent.getWidth(),
                                     30);
     
     juce::Rectangle<int> topRightRegion;
-    topRightRegion.setX(shaderListBounds.getWidth());
+    topRightRegion.setX(shaderListComponent.getWidth());
     topRightRegion.setY(shaderPropertiesLabel.getHeight());
     topRightRegion.setWidth(shaderPropertiesLabel.getWidth());
     topRightRegion.setHeight(getHeight() / 2 - shaderPropertiesLabel.getHeight());
     
     int padding = 10;
+    int spacing = 10;
     fixedSizeButton.setBounds(topRightRegion.getX() + padding,
                               topRightRegion.getY() + padding,
                               175, 20);
@@ -234,7 +173,7 @@ void PatchEditor::resized()
      * Bottom right region
      */
 
-    globalPropertiesLabel.setBounds(shaderListBounds.getWidth(), topRightRegion.getY() + topRightRegion.getHeight(),
+    globalPropertiesLabel.setBounds(shaderListComponent.getWidth(), topRightRegion.getY() + topRightRegion.getHeight(),
                                     topRightRegion.getWidth(), 30);
 
     juce::Rectangle<int> bottomRightRegion;
@@ -258,23 +197,13 @@ void PatchEditor::resized()
 
 void PatchEditor::buttonClicked(juce::Button *button)
 {
-    if (button == &newShaderButton) {
-        shaderListBoxModel.newRow();
-    } else if (button == &deleteButton) {
-        shaderListBoxModel.deleteSelectedRow();
-    } else if (button == &reloadButton) {
-        shaderListBoxModel.reloadSelectedRow();
-    } else if (button == &reloadAllButton) {
-        for (int i = 0; i < processor.getNumShaderFiles(); i++) {
-            processor.reloadShaderFile(i);
-        }
-    } else if (button == &fixedSizeButton) {
+    if (button == &fixedSizeButton) {
         if (fixedSizeButton.getToggleState()) {
             activateFixedSizeEditors();
         } else {
             greyOutFixedSizeEditors();
         }
-        processor.setShaderFixedSizeBuffer(shaderListBoxModel.getSelectedRow(),
+        processor.setShaderFixedSizeBuffer(shaderListComponent.getSelectedRow(),
                                            fixedSizeButton.getToggleState());
     }
 }
@@ -283,10 +212,10 @@ void PatchEditor::textEditorTextChanged(juce::TextEditor &textEditor)
 {
     if (&textEditor == &fixedSizeWidthEditor) {
         int width = textEditor.getText().getIntValue();
-        processor.setShaderFixedSizeWidth(shaderListBoxModel.getSelectedRow(), width);
+        processor.setShaderFixedSizeWidth(shaderListComponent.getSelectedRow(), width);
     } else if (&textEditor == &fixedSizeHeightEditor) {
         int height = textEditor.getText().getIntValue();
-        processor.setShaderFixedSizeHeight(shaderListBoxModel.getSelectedRow(), height);
+        processor.setShaderFixedSizeHeight(shaderListComponent.getSelectedRow(), height);
     } else if (&textEditor == &visuWidthEditor) {
         int width = textEditor.getText().getIntValue();
         processor.setVisualizationWidth(width);
@@ -300,7 +229,7 @@ void PatchEditor::comboBoxChanged(juce::ComboBox *comboBoxThatHasChanged)
 {
     if (comboBoxThatHasChanged == &destinationBox) {
         int id = destinationBox.getSelectedId();
-        processor.setShaderDestination(shaderListBoxModel.getSelectedRow(), id);
+        processor.setShaderDestination(shaderListComponent.getSelectedRow(), id);
     }
 }
 
@@ -352,11 +281,11 @@ void PatchEditor::activateFixedSizeEditors()
                                                           255 - (255 - fixedSizeHeightBg.getGreen()) * 2,
                                                           255 - (255 - fixedSizeHeightBg.getBlue()) * 2));
                                              
-    if (shaderListBoxModel.getSelectedRow() > -1) {
+    if (shaderListComponent.getSelectedRow() > -1) {
         fixedSizeWidthEditor.setText(
-            std::to_string(processor.getShaderFixedSizeWidth(shaderListBoxModel.getSelectedRow())), false);
+            std::to_string(processor.getShaderFixedSizeWidth(shaderListComponent.getSelectedRow())), false);
         fixedSizeHeightEditor.setText(
-            std::to_string(processor.getShaderFixedSizeHeight(shaderListBoxModel.getSelectedRow())), false);
+            std::to_string(processor.getShaderFixedSizeHeight(shaderListComponent.getSelectedRow())), false);
     }
 
     fixedSizeWidthEditor.setReadOnly(false);
@@ -398,10 +327,10 @@ void PatchEditor::loadTopRightRegion(int shaderIdx)
 }
 
 PatchEditor::ShaderListBoxModel::ShaderListBoxModel(juce::TableListBox *box,
-                                                    PatchEditor &parent,
+                                                    PatchEditor &patchEditor,
                                                     ShadertoyAudioProcessor &processor)
  : box(box),
-   parent(parent),
+   patchEditor(patchEditor),
    processor(processor),
    selectedRow(-1)
 { }
@@ -460,7 +389,7 @@ void PatchEditor::ShaderListBoxModel::paintCell(
 void PatchEditor::ShaderListBoxModel::selectedRowsChanged(int lastRowSelected)
 {
     selectedRow = lastRowSelected;
-    parent.loadTopRightRegion(selectedRow);
+    patchEditor.loadTopRightRegion(selectedRow);
 }
 
 void PatchEditor::ShaderListBoxModel::cellDoubleClicked(
@@ -507,4 +436,95 @@ void PatchEditor::ShaderListBoxModel::reloadSelectedRow()
 int PatchEditor::ShaderListBoxModel::getSelectedRow()
 {
     return selectedRow;
+}
+
+PatchEditor::ShaderListComponent::ShaderListComponent(
+    ShadertoyAudioProcessorEditor &editor, // IN / OUT
+    ShadertoyAudioProcessor &processor,    // IN / OUT
+    PatchEditor &parent)                   // IN / OUT
+ : editor(editor),
+   processor(processor),
+   parent(parent),
+   shaderListBoxModel(&shaderListBox, parent, processor)
+{
+    addAndMakeVisible(shaderListLabel);
+    shaderListLabel.setText("Shaders", juce::NotificationType::dontSendNotification);
+
+    addAndMakeVisible(shaderListBox);
+    shaderListBox.setModel(&shaderListBoxModel);
+    shaderListBox.getHeader().addColumn("ID", 0, 30, 30, -1,
+                                        juce::TableHeaderComponent::ColumnPropertyFlags::notSortable);
+    shaderListBox.getHeader().addColumn("File Location", 1, 30, 30, -1,
+                                        juce::TableHeaderComponent::ColumnPropertyFlags::notSortable);
+                                        
+    addAndMakeVisible(newShaderButton);
+    newShaderButton.setButtonText("New");
+    newShaderButton.addListener(this);
+    
+    addAndMakeVisible(deleteButton);
+    deleteButton.setButtonText("Delete");
+    deleteButton.addListener(this);
+    
+    addAndMakeVisible(reloadButton);
+    reloadButton.setButtonText("Reload");
+    reloadButton.addListener(this);
+
+    addAndMakeVisible(reloadAllButton);
+    reloadAllButton.setButtonText("Reload All");
+    reloadAllButton.addListener(this);
+}
+
+void
+PatchEditor::ShaderListComponent::paint(juce::Graphics& g) // IN
+{
+    g.setColour(shaderListBox.findColour(juce::ListBox::backgroundColourId));
+    g.fillAll();
+
+    g.setColour(juce::Colours::black);
+    g.fillRect(shaderListLabel.getBounds());
+}
+
+void
+PatchEditor::ShaderListComponent::resized()
+{
+    shaderListLabel.setBounds(getX(), 0, getWidth(), 30);
+
+    shaderListBox.setBounds(getX(), shaderListLabel.getHeight(), getWidth(),
+                            getHeight() - shaderListLabel.getHeight() - 40);
+    shaderListBox.getHeader().setColumnWidth(0, 40);
+    shaderListBox.getHeader().setColumnWidth(1, getWidth() - 40);
+    
+    int buttonWidth = 75;
+    int spacing = 10;
+    int totalWidth = buttonWidth * 4 + spacing * 3;
+    int newShaderX = (getWidth() - totalWidth) / 2;
+    int deleteX = newShaderX + buttonWidth + spacing;
+    int reloadX = deleteX + buttonWidth + spacing;
+    int reloadAllX = reloadX + buttonWidth + spacing;
+    newShaderButton.setBounds(newShaderX, getHeight() - 30, buttonWidth, 20);
+    deleteButton.setBounds(deleteX, getHeight() - 30, buttonWidth, 20);
+    reloadButton.setBounds(reloadX, getHeight() - 30, buttonWidth, 20);
+    reloadAllButton.setBounds(reloadAllX, getHeight() - 30, buttonWidth, 20);
+}
+
+void
+PatchEditor::ShaderListComponent::buttonClicked(juce::Button *button) // IN
+{
+    if (button == &newShaderButton) {
+        shaderListBoxModel.newRow();
+    } else if (button == &deleteButton) {
+        shaderListBoxModel.deleteSelectedRow();
+    } else if (button == &reloadButton) {
+        shaderListBoxModel.reloadSelectedRow();
+    } else if (button == &reloadAllButton) {
+        for (int i = 0; i < processor.getNumShaderFiles(); i++) {
+            processor.reloadShaderFile(i);
+        }
+    }
+}
+
+int
+PatchEditor::ShaderListComponent::getSelectedRow()
+{
+    return shaderListBoxModel.getSelectedRow();
 }
