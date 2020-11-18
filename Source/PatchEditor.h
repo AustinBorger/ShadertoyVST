@@ -172,7 +172,6 @@ private:
 
     void loadTopRightRegion(int shaderIdx);
     void greyOutTopRightRegion();
-    void shaderListEdgeDragged();
 
     ShaderListComponent shaderListComponent;
     ShaderPropertiesComponent shaderPropertiesComponent;
