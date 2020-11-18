@@ -1,18 +1,16 @@
-/*
-  ==============================================================================
+/*******************************************************************************
 
     PatchEditor.cpp
     Created: 17 Aug 2020 7:16:02pm
     Author:  Austin Borger, aaborger@gmail.com
 
-  ==============================================================================
-*/
+*******************************************************************************/
 
 #include <JuceHeader.h>
 #include "PatchEditor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
+
 PatchEditor::PatchEditor(ShadertoyAudioProcessorEditor &editor, // IN / OUT
                          ShadertoyAudioProcessor& processor)    // IN / OUT
  : editor(editor),
@@ -48,10 +46,25 @@ PatchEditor::resized()
                                         getWidth() - shaderListComponent.getWidth(),
                                         getHeight() / 2);
 
-    globalPropertiesComponent.setBounds(shaderListComponent.getWidth(),
+    globalPropertiesComponent.setBounds(shaderPropertiesComponent.getX(),
                                         shaderPropertiesComponent.getHeight(),
                                         shaderPropertiesComponent.getWidth(),
                                         getHeight() / 2);
+}
+
+void
+PatchEditor::childBoundsChanged(juce::Component *child)
+{
+    if (child == &shaderListComponent) {
+        shaderPropertiesComponent.setBounds(shaderListComponent.getWidth(), 0,
+                                            getWidth() - shaderListComponent.getWidth(),
+                                            getHeight() / 2);
+
+        globalPropertiesComponent.setBounds(shaderPropertiesComponent.getX(),
+                                            shaderPropertiesComponent.getHeight(),
+                                            shaderPropertiesComponent.getWidth(),
+                                            getHeight() / 2);
+    }
 }
 
 void
@@ -201,7 +214,8 @@ PatchEditor::ShaderListComponent::ShaderListComponent(
  : editor(editor),
    processor(processor),
    parent(parent),
-   shaderListBoxModel(&shaderListBox, parent, processor)
+   shaderListBoxModel(&shaderListBox, parent, processor),
+   resizer(this, this, juce::ResizableEdgeComponent::Edge::rightEdge)
 {
     addAndMakeVisible(shaderListLabel);
     shaderListLabel.setText("Shaders", juce::NotificationType::dontSendNotification);
@@ -228,6 +242,8 @@ PatchEditor::ShaderListComponent::ShaderListComponent(
     addAndMakeVisible(reloadAllButton);
     reloadAllButton.setButtonText("Reload All");
     reloadAllButton.addListener(this);
+
+    addAndMakeVisible(resizer);
 }
 
 void
@@ -250,17 +266,21 @@ PatchEditor::ShaderListComponent::resized()
     shaderListBox.getHeader().setColumnWidth(0, 40);
     shaderListBox.getHeader().setColumnWidth(1, getWidth() - 40);
     
-    int buttonWidth = 75;
-    int spacing = 10;
-    int totalWidth = buttonWidth * 4 + spacing * 3;
+    int totalWidth = BUTTON_WIDTH * 4 + BUTTON_SPACING * 3;
     int newShaderX = (getWidth() - totalWidth) / 2;
-    int deleteX = newShaderX + buttonWidth + spacing;
-    int reloadX = deleteX + buttonWidth + spacing;
-    int reloadAllX = reloadX + buttonWidth + spacing;
-    newShaderButton.setBounds(newShaderX, getHeight() - 30, buttonWidth, 20);
-    deleteButton.setBounds(deleteX, getHeight() - 30, buttonWidth, 20);
-    reloadButton.setBounds(reloadX, getHeight() - 30, buttonWidth, 20);
-    reloadAllButton.setBounds(reloadAllX, getHeight() - 30, buttonWidth, 20);
+    int deleteX = newShaderX + BUTTON_WIDTH + BUTTON_SPACING;
+    int reloadX = deleteX + BUTTON_WIDTH + BUTTON_SPACING;
+    int reloadAllX = reloadX + BUTTON_WIDTH + BUTTON_SPACING;
+    newShaderButton.setBounds(newShaderX, getHeight() - 30, BUTTON_WIDTH,
+                              BUTTON_HEIGHT);
+    deleteButton.setBounds(deleteX, getHeight() - 30, BUTTON_WIDTH,
+                           BUTTON_HEIGHT);
+    reloadButton.setBounds(reloadX, getHeight() - 30, BUTTON_WIDTH,
+                           BUTTON_HEIGHT);
+    reloadAllButton.setBounds(reloadAllX, getHeight() - 30, BUTTON_WIDTH,
+                              BUTTON_HEIGHT);
+
+    resizer.setBounds(getWidth() - 2, 0, 2, getHeight());
 }
 
 void
@@ -277,6 +297,29 @@ PatchEditor::ShaderListComponent::buttonClicked(juce::Button *button) // IN
             processor.reloadShaderFile(i);
         }
     }
+}
+
+void
+PatchEditor::ShaderListComponent::checkBounds(
+    juce::Rectangle<int>& bounds,               // IN / OUT
+    const juce::Rectangle<int>& previousBounds, // IN
+    const juce::Rectangle<int>& limits,         // IN
+    bool isStretchingTop,                       // IN
+    bool isStretchingLeft,                      // IN
+    bool isStretchingBottom,                    // IN
+    bool isStretchingRight)                     // IN
+{
+    if (isStretchingTop || isStretchingLeft || isStretchingBottom) {
+        bounds = previousBounds;
+    } else {
+        bounds.setWidth(max(bounds.getWidth(),
+                            BUTTON_WIDTH * 4 + BUTTON_SPACING * 5));
+        bounds.setWidth(min(bounds.getWidth(),
+                            parent.getWidth() * 2 / 3));
+    }
+
+    (void)(limits);
+    (void)(isStretchingRight);
 }
 
 int

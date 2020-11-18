@@ -30,6 +30,7 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
     void processorStateChanged() override;
+    void childBoundsChanged(juce::Component *child) override;
 
 private:
     class ShaderListBoxModel : public juce::TableListBoxModel
@@ -64,7 +65,8 @@ private:
     };
 
     class ShaderListComponent : public juce::Component,
-                                public juce::Button::Listener
+                                public juce::Button::Listener,
+                                public juce::ComponentBoundsConstrainer
     {
     public:
         ShaderListComponent(ShadertoyAudioProcessorEditor &editor,
@@ -74,6 +76,13 @@ private:
         void paint(juce::Graphics&) override;
         void resized() override;
         void buttonClicked(juce::Button *) override;
+        void checkBounds(juce::Rectangle<int>& bounds,
+                         const juce::Rectangle<int>& previousBounds,
+                         const juce::Rectangle<int>& limits,
+                         bool isStretchingTop,
+                         bool isStretchingLeft,
+                         bool isStretchingBottom,
+                         bool isStretchingRight) override;
 
         int getSelectedRow();
 
@@ -84,12 +93,17 @@ private:
         juce::TextButton deleteButton;
         juce::TextButton reloadButton;
         juce::TextButton reloadAllButton;
+        juce::ResizableEdgeComponent resizer;
 
         ShaderListBoxModel shaderListBoxModel;
 
         ShadertoyAudioProcessorEditor &editor;
         ShadertoyAudioProcessor &processor;
         PatchEditor &parent;
+
+        static constexpr unsigned int BUTTON_WIDTH = 75;
+        static constexpr unsigned int BUTTON_HEIGHT = 20;
+        static constexpr unsigned int BUTTON_SPACING = 10;
     };
 
     class ShaderPropertiesComponent : public juce::Component,
@@ -158,6 +172,7 @@ private:
 
     void loadTopRightRegion(int shaderIdx);
     void greyOutTopRightRegion();
+    void shaderListEdgeDragged();
 
     ShaderListComponent shaderListComponent;
     ShaderPropertiesComponent shaderPropertiesComponent;
