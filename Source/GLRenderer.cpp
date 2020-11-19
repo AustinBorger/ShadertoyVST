@@ -250,6 +250,10 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
         program.softPedalIntrinsic->set((GLfloat)softPedal);
     }
 
+    if (program.channelPressureIntrinsic != nullptr) {
+        program.channelPressureIntrinsic->set((GLfloat)channelPressure);
+    }
+
     if (program.timeIntrinsic != nullptr) {
         program.timeIntrinsic->set((GLfloat)currentAudioTimestamp);
     }
@@ -456,6 +460,8 @@ GLRenderer::renderOpenGL()
                         softPedal = 1.0f;
                     } else if (message.isSoftPedalOff()) {
                         softPedal = 0.0f;
+                    } else if (message.isChannelPressure()) {
+                        channelPressure = (float)(message.getChannelPressureValue()) / 127;
                     }
                 }
                 midiFrames.pop();
@@ -644,6 +650,7 @@ GLRenderer::checkIntrinsicUniform(const juce::String &name, // IN
         { "iSustainPedal", GL_FLOAT, 1, 1, program.sustainPedalIntrinsic },
         { "iSostenutoPedal", GL_FLOAT, 1, 1, program.sostenutoPedalIntrinsic },
         { "iSoftPedal", GL_FLOAT, 1, 1, program.softPedalIntrinsic },
+        { "iChannelPressure", GL_FLOAT, 1, 1, program.channelPressureIntrinsic },
         { "iTime", GL_FLOAT, 1, 1, program.timeIntrinsic },
         { "iSampleRate", GL_FLOAT, 1, 1, program.sampleRateIntrinsic },
         { "iAudioChannel0[0]", GL_FLOAT, 16, 2048, program.audioChannel0 },

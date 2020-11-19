@@ -60,6 +60,7 @@ private:
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> sustainPedalIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> sostenutoPedalIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> softPedalIntrinsic;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> channelPressureIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> timeIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> sampleRateIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> audioChannel0;
@@ -145,6 +146,7 @@ private:
     float sustainPedal = 0.0f;
     float sostenutoPedal = 0.0f;
     float softPedal = 0.0f;
+    float channelPressure = 0.0f;
   
     std::unique_ptr<float[]> audioChannel0;
     GLint maxSizeAudioChannel0 = 0;
