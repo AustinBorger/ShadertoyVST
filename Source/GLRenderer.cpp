@@ -101,6 +101,11 @@ GLRenderer::newOpenGLContextCreated()
         keyUpLast[i] = -1.0f;
     }
 
+    pitchWheel = 0.0f;
+    sustainPedal = 0.0f;
+    sostenutoPedal = 0.0f;
+    softPedal = 0.0f;
+
 #if GLRENDER_LOG_FPS == 1
     avgFPS = 0.0;
     lastFPSLog = 0.0;
@@ -223,6 +228,18 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
 
     if (program.pitchWheelIntrinsic != nullptr) {
         program.pitchWheelIntrinsic->set((GLfloat)pitchWheel);
+    }
+
+    if (program.sustainPedalIntrinsic != nullptr) {
+        program.sustainPedalIntrinsic->set((GLfloat)sustainPedal);
+    }
+
+    if (program.sostenutoPedalIntrinsic != nullptr) {
+        program.sostenutoPedalIntrinsic->set((GLfloat)sostenutoPedal);
+    }
+
+    if (program.softPedalIntrinsic != nullptr) {
+        program.softPedalIntrinsic->set((GLfloat)softPedal);
     }
 
     if (program.timeIntrinsic != nullptr) {
@@ -416,7 +433,19 @@ GLRenderer::renderOpenGL()
                         keyUpLast[message.getNoteNumber()] = midiFrame.timestamp;
                         keyUpVelocity[message.getNoteNumber()] = message.getFloatVelocity();
                     } else if (message.isPitchWheel()) {
-                        pitchWheel = (double)(message.getPitchWheelValue()) / int(0x3fff);
+                        pitchWheel = (float)(message.getPitchWheelValue()) / int(0x3fff);
+                    } else if (message.isSustainPedalOn()) {
+                        sustainPedal = 1.0f;
+                    } else if (message.isSustainPedalOff()) {
+                        sustainPedal = 0.0f;
+                    } else if (message.isSostenutoPedalOn()) {
+                        sostenutoPedal = 1.0f;
+                    } else if (message.isSostenutoPedalOff()) {
+                        sostenutoPedal = 0.0f;
+                    } else if (message.isSoftPedalOn()) {
+                        softPedal = 1.0f;
+                    } else if (message.isSoftPedalOff()) {
+                        softPedal = 0.0f;
                     }
                 }
                 midiFrames.pop();
@@ -601,6 +630,9 @@ GLRenderer::checkIntrinsicUniform(const juce::String &name, // IN
         { "iKeyDownVelocity[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyDownVelocityIntrinsic },
         { "iKeyUpVelocity[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyUpVelocityIntrinsic },
         { "iPitchWheel", GL_FLOAT, 1, 1, program.pitchWheelIntrinsic },
+        { "iSustainPedal", GL_FLOAT, 1, 1, program.sustainPedalIntrinsic },
+        { "iSostenutoPedal", GL_FLOAT, 1, 1, program.sostenutoPedalIntrinsic },
+        { "iSoftPedal", GL_FLOAT, 1, 1, program.softPedalIntrinsic },
         { "iTime", GL_FLOAT, 1, 1, program.timeIntrinsic },
         { "iSampleRate", GL_FLOAT, 1, 1, program.sampleRateIntrinsic },
         { "iAudioChannel0[0]", GL_FLOAT, 16, 2048, program.audioChannel0 },
