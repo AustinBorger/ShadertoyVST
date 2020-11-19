@@ -205,6 +205,10 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
         program.keyUpIntrinsic->set(vals, MIDI_NUM_KEYS);
     }
 
+    if (program.pitchWheelIntrinsic != nullptr) {
+        program.pitchWheelIntrinsic->set((GLfloat)pitchWheel);
+    }
+
     if (program.timeIntrinsic != nullptr) {
         program.timeIntrinsic->set((GLfloat)currentAudioTimestamp);
     }
@@ -393,6 +397,8 @@ GLRenderer::renderOpenGL()
                         keyDownLast[message.getNoteNumber()] = midiFrame.timestamp;
                     } else if (message.isNoteOff()) {
                         keyUpLast[message.getNoteNumber()] = midiFrame.timestamp;
+                    } else if (message.isPitchWheel()) {
+                        pitchWheel = (double)(message.getPitchWheelValue()) / int(0x3fff);
                     }
                 }
                 midiFrames.pop();
@@ -574,6 +580,7 @@ GLRenderer::checkIntrinsicUniform(const juce::String &name, // IN
         { "iBufferD", GL_SAMPLER_2D, 1, 1, program.auxBufferIntrinsic[3] },
         { "iKeyDown[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyDownIntrinsic },
         { "iKeyUp[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyUpIntrinsic },
+        { "iPitchWheel", GL_FLOAT, 1, 1, program.pitchWheelIntrinsic },
         { "iTime", GL_FLOAT, 1, 1, program.timeIntrinsic },
         { "iSampleRate", GL_FLOAT, 1, 1, program.sampleRateIntrinsic },
         { "iAudioChannel0[0]", GL_FLOAT, 16, 2048, program.audioChannel0 },
