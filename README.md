@@ -8,8 +8,8 @@ as uniforms, facilitating the use of a DAW to produce rhythmically guided animat
 
 ## Installation
 
-Download the latest release on GitHub, and copy the .vst3 to C:\Program Files\Common Files\VST3
-or your preferred VST3 installation location.
+Download the latest release [here](https://github.com/AustinBorger/ShadertoyVST/releases/download/v1.01/Shadertoy.vst3),
+and copy the .vst3 to C:\Program Files\Common Files\VST3 or your preferred VST3 installation location.
 
 ## Getting Started
 
