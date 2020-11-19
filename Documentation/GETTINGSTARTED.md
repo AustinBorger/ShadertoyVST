@@ -41,13 +41,14 @@ alias uniform names using the #define directive.
 In addition to parameter uniforms, ShadertoyVST also exposes the set of
 intrinsic uniforms defined below:
 
-- `vec2 iResolution` - The active resolution of the output framebuffer
-- `vec2 iResolutionBufferA..D` - The active resolution of each auxiliary framebuffer
-- `sampler2D iBufferA..D` - The sampler2D representations of the auxiliary framebuffers
+- `vec2 iResolution` - The active resolution of the output framebuffer.
+- `vec2 iResolutionBufferA..D` - The active resolution of each auxiliary framebuffer.
+- `sampler2D iBufferA..D` - The sampler2D representations of the auxiliary framebuffers.
 - `float iKeyDown[128]` - An array of the times the last key down events occurred on each MIDI key.
 - `float iKeyUp[128]` - Like iKeyDown, except for key up events.
-- `float iKeyDownVelocity[128]` - The velocity of the last key down event
-- `float iKeyUpVelocity[128]` - The velocity of the last key up event
+- `float iKeyDownVelocity[128]` - The velocity of the last key down event.
+- `float iKeyUpVelocity[128]` - The velocity of the last key up event.
+- `float iAfterTouch[128]` - The aftertouch value for each key.
 - `float iPitchWheel` - The orientation of the pitch wheel, normalized between 0.0 and 1.0.
 - `float iSustainPedal` - Whether the sustain pedal is on, 0.0 or 1.0.
 - `float iSostenutoPedal` - Whether the sostenuto pedal is on, 0.0 or 1.0.

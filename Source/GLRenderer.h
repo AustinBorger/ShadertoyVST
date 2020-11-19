@@ -55,6 +55,7 @@ private:
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyUpIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyDownVelocityIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyUpVelocityIntrinsic;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> afterTouchIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> pitchWheelIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> sustainPedalIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> sostenutoPedalIntrinsic;
@@ -139,6 +140,7 @@ private:
     double keyUpLast[MIDI_NUM_KEYS] = { };
     float keyDownVelocity[MIDI_NUM_KEYS] = { };
     float keyUpVelocity[MIDI_NUM_KEYS] = { };
+    float afterTouch[MIDI_NUM_KEYS] = { };
     float pitchWheel = 0.0f;
     float sustainPedal = 0.0f;
     float sostenutoPedal = 0.0f;

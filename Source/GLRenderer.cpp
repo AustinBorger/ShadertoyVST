@@ -226,6 +226,14 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
         program.keyUpVelocityIntrinsic->set(vals, MIDI_NUM_KEYS);
     }
 
+    if (program.afterTouchIntrinsic != nullptr) {
+        GLfloat vals[MIDI_NUM_KEYS] = { };
+        for (int i = 0; i < MIDI_NUM_KEYS; i++) {
+            vals[i] = (GLfloat)afterTouch[i];
+        }
+        program.afterTouchIntrinsic->set(vals, MIDI_NUM_KEYS);
+    }
+
     if (program.pitchWheelIntrinsic != nullptr) {
         program.pitchWheelIntrinsic->set((GLfloat)pitchWheel);
     }
@@ -432,6 +440,8 @@ GLRenderer::renderOpenGL()
                     } else if (message.isNoteOff()) {
                         keyUpLast[message.getNoteNumber()] = midiFrame.timestamp;
                         keyUpVelocity[message.getNoteNumber()] = message.getFloatVelocity();
+                    } else if (message.isAftertouch()) {
+                        afterTouch[message.getNoteNumber()] = (float)(message.getAfterTouchValue()) / 127;
                     } else if (message.isPitchWheel()) {
                         pitchWheel = (float)(message.getPitchWheelValue()) / int(0x3fff);
                     } else if (message.isSustainPedalOn()) {
@@ -629,6 +639,7 @@ GLRenderer::checkIntrinsicUniform(const juce::String &name, // IN
         { "iKeyUp[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyUpIntrinsic },
         { "iKeyDownVelocity[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyDownVelocityIntrinsic },
         { "iKeyUpVelocity[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyUpVelocityIntrinsic },
+        { "iAfterTouch[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.afterTouchIntrinsic },
         { "iPitchWheel", GL_FLOAT, 1, 1, program.pitchWheelIntrinsic },
         { "iSustainPedal", GL_FLOAT, 1, 1, program.sustainPedalIntrinsic },
         { "iSostenutoPedal", GL_FLOAT, 1, 1, program.sostenutoPedalIntrinsic },
