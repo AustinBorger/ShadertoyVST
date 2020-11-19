@@ -46,6 +46,8 @@ intrinsic uniforms defined below:
 - `sampler2D iBufferA..D` - The sampler2D representations of the auxiliary framebuffers
 - `float iKeyDown[128]` - An array of the times the last key down events occurred on each MIDI key.
 - `float iKeyUp[128]` - Like iKeyDown, except for key up events.
+- `float iKeyDownVelocity[128]` - The velocity of the last key down event
+- `float iKeyUpVelocity[128]` - The velocity of the last key up event
 - `float iPitchWheel` - The orientation of the pitch wheel, normalized between 0.0 and 1.0.
 - `float iTime` - The current render time. Note that this is not the same as playlist or sequencer time.
 - `float iSampleRate` - The sample rate of the input audio stream.
