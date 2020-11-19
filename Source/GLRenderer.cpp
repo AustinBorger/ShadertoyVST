@@ -205,6 +205,22 @@ GLRenderer::setProgramIntrinsics(int programIdx,               // IN
         program.keyUpIntrinsic->set(vals, MIDI_NUM_KEYS);
     }
 
+    if (program.keyDownVelocityIntrinsic != nullptr) {
+        GLfloat vals[MIDI_NUM_KEYS] = { };
+        for (int i = 0; i < MIDI_NUM_KEYS; i++) {
+            vals[i] = (GLfloat)keyDownVelocity[i];
+        }
+        program.keyDownVelocityIntrinsic->set(vals, MIDI_NUM_KEYS);
+    }
+
+    if (program.keyUpVelocityIntrinsic != nullptr) {
+        GLfloat vals[MIDI_NUM_KEYS] = { };
+        for (int i = 0; i < MIDI_NUM_KEYS; i++) {
+            vals[i] = (GLfloat)keyUpVelocity[i];
+        }
+        program.keyUpVelocityIntrinsic->set(vals, MIDI_NUM_KEYS);
+    }
+
     if (program.pitchWheelIntrinsic != nullptr) {
         program.pitchWheelIntrinsic->set((GLfloat)pitchWheel);
     }
@@ -395,8 +411,10 @@ GLRenderer::renderOpenGL()
                     const juce::MidiMessage &message = metadata.getMessage();
                     if (message.isNoteOn()) {
                         keyDownLast[message.getNoteNumber()] = midiFrame.timestamp;
+                        keyDownVelocity[message.getNoteNumber()] = message.getFloatVelocity();
                     } else if (message.isNoteOff()) {
                         keyUpLast[message.getNoteNumber()] = midiFrame.timestamp;
+                        keyUpVelocity[message.getNoteNumber()] = message.getFloatVelocity();
                     } else if (message.isPitchWheel()) {
                         pitchWheel = (double)(message.getPitchWheelValue()) / int(0x3fff);
                     }
@@ -580,6 +598,8 @@ GLRenderer::checkIntrinsicUniform(const juce::String &name, // IN
         { "iBufferD", GL_SAMPLER_2D, 1, 1, program.auxBufferIntrinsic[3] },
         { "iKeyDown[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyDownIntrinsic },
         { "iKeyUp[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyUpIntrinsic },
+        { "iKeyDownVelocity[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyDownVelocityIntrinsic },
+        { "iKeyUpVelocity[0]", GL_FLOAT, MIDI_NUM_KEYS, MIDI_NUM_KEYS, program.keyUpVelocityIntrinsic },
         { "iPitchWheel", GL_FLOAT, 1, 1, program.pitchWheelIntrinsic },
         { "iTime", GL_FLOAT, 1, 1, program.timeIntrinsic },
         { "iSampleRate", GL_FLOAT, 1, 1, program.sampleRateIntrinsic },

@@ -53,6 +53,8 @@ private:
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> auxBufferIntrinsic[4];
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyDownIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyUpIntrinsic;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyDownVelocityIntrinsic;
+        std::unique_ptr<juce::OpenGLShaderProgram::Uniform> keyUpVelocityIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> pitchWheelIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> timeIntrinsic;
         std::unique_ptr<juce::OpenGLShaderProgram::Uniform> sampleRateIntrinsic;
@@ -132,6 +134,8 @@ private:
     double lastAudioTimestamp = -1.0;
     double keyDownLast[MIDI_NUM_KEYS] = { };
     double keyUpLast[MIDI_NUM_KEYS] = { };
+    float keyDownVelocity[MIDI_NUM_KEYS] = { };
+    float keyUpVelocity[MIDI_NUM_KEYS] = { };
     double pitchWheel = 0.0;
   
     std::unique_ptr<float[]> audioChannel0;
