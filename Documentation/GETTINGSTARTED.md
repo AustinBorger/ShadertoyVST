@@ -53,8 +53,8 @@ intrinsic uniforms defined below:
 - `float iSustainPedal` - Whether the sustain pedal is on, 0.0 or 1.0.
 - `float iSostenutoPedal` - Whether the sostenuto pedal is on, 0.0 or 1.0.
 - `float iSoftPedal` - Whether the soft pedal is on, 0.0 or 1.0.
-- `float iTime` - The current render time. Note that this is not the same as playlist or sequencer time.
 - `float iChannelPressure` - The channel pressure (like aftertouch, except channel-wide).
+- `float iTime` - The current render time. Note that this is not the same as playlist or sequencer time.
 - `float iSampleRate` - The sample rate of the input audio stream.
 - `float iAudioChannel0..1[]` - An array of the last N samples for each audio channel. N can range from 16 to 2048.
 
